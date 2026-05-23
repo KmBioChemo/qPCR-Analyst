@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>qPCR Analyst v5</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=DM+Sans:wght@400;500;600&family=DM+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f2f4f9;--s1:#fff;--s2:#f7f9fd;--s3:#eef1f8;
+  --b1:rgba(30,36,72,.07);--b2:rgba(30,36,72,.14);
+  --ac:#0d9488;--acd:rgba(13,148,136,.1);
+  --pu:#7c3aed;--pud:rgba(124,58,237,.1);
+  --am:#d97706;--amd:rgba(217,119,6,.1);
+  --ok:#059669;--wn:#d97706;--er:#dc2626;
+  --tx:#1e2438;--dm:#4a5572;--mu:#8a95b0;
+  --uf:'DM Sans',sans-serif;--mo:'DM Mono',monospace;--se:'Fraunces',serif;--r:12px;
+  --sh:0 1px 4px rgba(30,36,72,.07),0 4px 18px rgba(30,36,72,.05);
+}
+body{background:var(--bg);color:var(--tx);font-family:var(--uf);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+header{background:#fff;border-bottom:1px solid var(--b1);box-shadow:0 1px 4px rgba(30,36,72,.06);padding:12px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:99}
+.logo{font-family:var(--se);font-size:20px;color:var(--ac)}
+.hbtns{display:flex;gap:8px;align-items:center}
+.ver{font-family:var(--mo);font-size:11px;color:var(--mu);border:1px solid var(--b2);border-radius:20px;padding:2px 8px}
+.tabs{background:#fff;border-bottom:1px solid var(--b1);padding:0 28px;display:flex}
+.tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--mu);font-family:var(--uf);font-size:13px;font-weight:500;padding:12px 18px;cursor:pointer;margin-bottom:-1px;transition:all .2s}
+.tab.on{color:var(--ac);border-bottom-color:var(--ac)}
+.pg{display:none;padding:24px 28px;max-width:1440px;margin:0 auto}.pg.on{display:block}
+.card{background:#fff;border:1px solid var(--b1);border-radius:var(--r);padding:20px;margin-bottom:18px;box-shadow:var(--sh)}
+.card.am-c{border-color:rgba(217,119,6,.2)}.card.pu-c{border-color:rgba(124,58,237,.16)}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;flex-wrap:wrap}
+.ct{font-family:var(--se);font-size:15px;font-weight:600;display:flex;align-items:center;gap:9px}
+.sp{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mo);font-size:11px;flex-shrink:0;border:1px solid}
+.st{background:var(--acd);color:var(--ac);border-color:rgba(13,148,136,.3)}
+.sa{background:var(--amd);color:var(--am);border-color:rgba(217,119,6,.3)}
+.sp2{background:var(--pud);color:var(--pu);border-color:rgba(124,58,236,.3)}
+.fg{display:flex;flex-direction:column;gap:5px}
+label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--mu)}
+input[type=number],input[type=text],select,textarea{background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--tx);font-family:var(--mo);font-size:13px;padding:8px 11px;outline:none;width:100%;transition:border-color .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(13,148,136,.1)}
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+textarea{resize:vertical}
+.btn{border-radius:8px;font-family:var(--uf);font-size:10px;font-weight:500;padding:7px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;border:1px solid;transition:all .2s}
+.bt{background:var(--acd);border-color:rgba(13,148,136,.3);color:var(--ac)}.bt:hover{background:rgba(13,148,136,.18)}
+.bs{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}.bs:hover{background:#0f766e}
+.bp{background:var(--pud);border-color:rgba(124,58,237,.3);color:var(--pu)}.bp:hover{background:rgba(124,58,237,.18)}
+.ba{background:var(--amd);border-color:rgba(217,119,6,.3);color:var(--am);font-size:11px;padding:6px 11px}
+.bg2{background:rgba(5,150,105,.1);border-color:rgba(5,150,105,.3);color:var(--ok)}
+.sc{overflow-x:auto}
+table{width:max-content;min-width:100%;border-collapse:collapse;font-family:var(--mo);font-size:12px}
+th{background:var(--s3);color:var(--dm);font-weight:500;font-size:9px;text-transform:uppercase;letter-spacing:.04em;padding:5px 5px;text-align:left;border-bottom:1px solid var(--b2);white-space:nowrap}
+td{padding:4px 5px;border-bottom:1px solid rgba(30,36,72,.05);color:var(--dm);vertical-align:middle}
+tr:last-child td{border-bottom:none}tr:hover td{background:rgba(13,148,136,.02)}
+td input{background:#f0f4ff;border:1px solid rgba(30,36,72,.15);border-radius:4px;color:#1e2438!important;font-family:'DM Mono',monospace;font-size:12px;padding:4px 6px;width:80px;min-width:80px;text-align:center;transition:border-color .15s;-webkit-text-fill-color:#1e2438!important;opacity:1}
+td input:focus{border-color:#0d9488;box-shadow:0 0 0 2px rgba(13,148,136,.12);outline:none;background:#fff;-webkit-text-fill-color:#1e2438}
+td input::placeholder{color:#9aa5b8!important;-webkit-text-fill-color:#9aa5b8!important}
+td input.out{background:#fef3c7!important;border:2px solid #f59e0b!important;border-radius:4px;color:#92400e!important;-webkit-text-fill-color:#92400e!important;cursor:pointer;font-weight:700;box-shadow:0 0 0 2px rgba(245,158,11,.25)}
+td input.excl{background:rgba(220,38,38,.08)!important;border-color:rgba(220,38,38,.35)!important;color:var(--mu)!important;-webkit-text-fill-color:var(--mu)!important;text-decoration:line-through;opacity:.55}
+.mg{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:10px;margin-bottom:16px}
+.mc{background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:13px;text-align:center}
+.mc.ok{border-color:rgba(5,150,105,.25);background:rgba(5,150,105,.05)}
+.mc.wn{border-color:rgba(217,119,6,.25);background:rgba(217,119,6,.05)}
+.mc.bd{border-color:rgba(220,38,38,.25);background:rgba(220,38,38,.05)}
+.mc.pu{border-color:rgba(124,58,237,.25);background:rgba(124,58,237,.05)}
+.ml{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--mu);margin-bottom:6px}
+.mv{font-family:var(--mo);font-size:21px;font-weight:500;line-height:1}.mu2{font-size:9px;color:var(--mu);margin-top:3px}
+.mc.ok .mv{color:var(--ok)}.mc.wn .mv{color:var(--wn)}.mc.bd .mv{color:var(--er)}.mc.pu .mv{color:var(--pu)}
+.bx{background:#fff;border:1px solid var(--b1);border-radius:10px;padding:20px;box-shadow:var(--sh)}
+.tag{background:var(--s2);border:1px solid var(--b1);border-radius:7px;padding:3px 8px;font-family:var(--mo);font-size:12px;color:var(--dm);display:inline-flex;align-items:center;gap:5px}
+.xb{background:none;border:none;color:var(--mu);cursor:pointer;font-size:14px;line-height:1;padding:0}.xb:hover{color:var(--er)}
+.bdg{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500}
+.bok{background:rgba(5,150,105,.15);color:var(--ok)}.bwn{background:rgba(217,119,6,.15);color:var(--wn)}.bbd{background:rgba(220,38,38,.15);color:var(--er)}
+.al{border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px;border:1px solid}
+.al-i{background:rgba(13,148,136,.06);border-color:rgba(13,148,136,.18);color:var(--dm)}
+.al-o{background:rgba(5,150,105,.06);border-color:rgba(5,150,105,.2);color:var(--dm)}
+.al-w{background:rgba(217,119,6,.06);border-color:rgba(217,119,6,.2);color:var(--dm)}
+.al-b{background:rgba(220,38,38,.06);border-color:rgba(220,38,38,.2);color:var(--dm)}
+.cr{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(30,36,72,.06)}.cr:last-child{border-bottom:none}
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:22px}
+.div{height:1px;background:var(--b1);margin:16px 0}
+.sl{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--mu);margin-bottom:9px}
+.pb-w{background:var(--s3);border-radius:20px;height:5px;overflow:hidden;margin-top:4px}.pb{height:100%;border-radius:20px;transition:width .5s}
+.pill{background:var(--s2);border:1px solid var(--b1);border-radius:7px;padding:4px 9px;font-family:var(--mo);font-size:11px;display:inline-flex;align-items:center;gap:5px}
+.gau{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mo);font-size:15px;font-weight:500;border:3px solid;flex-shrink:0}
+.mat-c{background:var(--s2);border-radius:7px;padding:9px;text-align:center;border:1px solid var(--b1)}
+.hkg-chip{background:rgba(217,119,6,.12);border:1px solid rgba(217,119,6,.3);border-radius:20px;padding:2px 9px;font-size:11px;color:var(--am);font-family:var(--mo);display:inline-flex;align-items:center;gap:4px}
+tr.r1 td{background:rgba(5,150,105,.04)}tr.r2 td{background:rgba(5,150,105,.02)}
+.stars{font-weight:700;letter-spacing:.05em}
+.ns{color:var(--mu)}.s1{color:var(--wn)}.s2{color:#d97706}.s3{color:var(--er)}.s4{color:#b91c1c}
+.dropzone{border:2px dashed var(--b2);border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:all .2s}
+.dropzone:hover,.dropzone.over{border-color:var(--ac);background:var(--acd)}
+.dropzone input{display:none}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(30,36,72,.35);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.modal-ov.show{display:flex}
+.modal-bx{background:#fff;border:1px solid var(--b1);border-radius:var(--r);padding:22px;max-width:580px;width:90%;box-shadow:0 8px 48px rgba(30,36,72,.15);max-height:90vh;overflow-y:auto}
+.hint{font-size:11px;color:var(--mu);margin-top:4px}
+.sticky{position:sticky;left:0;background:#fff;z-index:2;box-shadow:2px 0 4px rgba(30,36,72,.06)}.sticky2{position:sticky;left:72px;background:#fff;z-index:2}th.sticky2{background:var(--s3)}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(30,36,72,.25);border-radius:4px}::-webkit-scrollbar-thumb:hover{background:rgba(30,36,72,.45)}::-webkit-scrollbar-track{background:var(--s3);border-radius:4px}.sc::-webkit-scrollbar{height:10px}.sc::-webkit-scrollbar-thumb{background:rgba(30,36,72,.3);border-radius:5px}.sc::-webkit-scrollbar-thumb:hover{background:rgba(30,36,72,.55)}.sc::-webkit-scrollbar-track{background:#e8ecf5;border-radius:5px}
+@media(max-width:700px){.pg{padding:12px}.cg{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="lic-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.85);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+  <div style="background:#fff;border-radius:16px;padding:40px;max-width:420px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,.3);text-align:center">
+    <div style="font-size:32px;margin-bottom:8px">🔬</div>
+    <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:700;color:#0d9488;margin-bottom:4px">qPCR Analyst</div>
+    <div style="font-size:13px;color:#4a5572;margin-bottom:24px">Professional qPCR Analysis Tool</div>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;margin-bottom:20px;font-size:12px;color:#166534;text-align:left">
+      ✓ Standard curve validation &nbsp;·&nbsp; ✓ ΔΔCt analysis<br>
+      ✓ Welch t-test + ANOVA + BH-FDR &nbsp;·&nbsp; ✓ PNG export
+    </div>
+    <input id="lic-key-inp" type="text" placeholder="QPCR-PRO-XXXXX-BIO" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:monospace;text-align:center;margin-bottom:8px;box-sizing:border-box" onkeydown="if(event.key==='Enter')window._submitKey()">
+    <div id="lic-err" style="display:none;color:#dc2626;font-size:12px;margin-bottom:8px"></div>
+    <button onclick="window._submitKey()" style="width:100%;padding:11px;background:#0d9488;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px">Unlock Full Version</button>
+    <a href="https://ko-fi.com/kmbio" target="_blank" style="display:block;font-size:12px;color:#0d9488;margin-bottom:16px;text-decoration:none">Get a license key →</a>
+    <button onclick="window._enterDemo()" style="background:none;border:none;color:#8a95b0;font-size:12px;cursor:pointer;text-decoration:underline">Continue in demo mode</button>
+  </div>
+</div>
+<header>
+  <span class="logo">qPCR Analyst</span>
+  <div class="hbtns">
+    <button class="btn bt" onclick="saveSession()">💾 Save</button>
+    <label class="btn bt" style="cursor:pointer">📂 Load<input type="file" accept=".json" onchange="loadSession(event)" style="display:none"></label>
+    <span id="pro-badge" style="display:none;background:#0d9488;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:.05em">PRO</span><span class="ver">v5.0</span>
+  </div>
+</header>
+<nav class="tabs">
+  <button class="tab on" data-pg="v" onclick="sw('v',this)">🔬 Primer Validation</button>
+  <button class="tab" data-pg="a" onclick="sw('a',this)">📊 Expression Analysis</button>
+</nav>
+
+<!-- PASTE MODAL -->
+<div id="paste-modal" class="modal-ov">
+  <div class="modal-bx">
+    <div style="font-family:var(--se);font-size:15px;margin-bottom:12px">📋 Paste from Spreadsheet</div>
+    <div class="al al-i" style="font-size:12px">Paste tab-separated Ct values. <b>One row per sample</b>, columns = replicates per gene (in table order).</div>
+    <textarea id="paste-area" style="width:100%;height:140px;margin-top:10px" placeholder="Paste here (Ctrl+V)…"></textarea>
+    <div id="paste-info" style="font-size:11px;color:var(--mu);margin-top:6px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+      <button class="btn" style="background:none;border:1px solid var(--b2);color:var(--mu)" onclick="closePasteModal()">Cancel</button>
+      <button class="btn bs" onclick="doPaste()">Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- VALIDATION -->
+<div id="pg-v" class="pg on">
+  <div class="card">
+    <div class="ch"><div class="ct"><span class="sp st">1</span>Standard Curve Setup</div><button class="btn ba" onclick="loadVD()">▶ Demo</button><button class="btn bp" onclick="expVCSV()" style="font-size:11px">↓ Excel</button></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px">
+      <div>
+        <label style="display:block;margin-bottom:7px">Genes to validate</label>
+        <div style="display:flex;gap:8px;margin-bottom:7px">
+          <input type="text" id="v-gi" placeholder="e.g. GAPDH, TBP…" onkeydown="if(event.key==='Enter')addVG()" style="flex:1">
+          <button class="btn bt" onclick="addVG()">+ Add</button>
+        </div>
+        <div id="v-gl" style="display:flex;flex-wrap:wrap;gap:6px;min-height:26px"><span class="hint">No genes yet…</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start">
+        <div class="fg"><label>Dilution factor</label><input type="number" id="v-df" value="10" min="2" step="0.1"></div>
+        <div class="fg"><label>Points</label><input type="number" id="v-np" value="5" min="3" max="12"></div>
+        <div class="fg"><label>Replicates</label><input type="number" id="v-nr" value="3" min="1" max="6"></div>
+        <div class="fg"><label>Starting conc.</label><input type="number" id="v-sc" value="1" step="any"></div>
+      </div>
+    </div>
+    <button class="btn bs" onclick="buildVT()">⚙ Generate Tables</button>
+  </div>
+  <div id="v-gene-cards"></div>
+</div>
+
+<!-- ANALYSIS -->
+<div id="pg-a" class="pg">
+  <div class="card">
+    <div class="ch">
+      <div class="ct"><span class="sp st">1</span>Experiment Setup</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn ba" onclick="loadAD()">▶ Demo</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:14px">
+      <div class="fg">
+        <label>All genes (comma-separated)</label>
+        <input type="text" id="a-genes-inp" placeholder="e.g. GAPDH, TBP, IL-6, TNF-α">
+        <div class="hint">All genes measured, including housekeeping</div>
+      </div>
+      <div class="fg">
+        <label>Reference genes / Housekeeping (HKG)</label>
+        <input type="text" id="a-hkg-inp" placeholder="e.g. GAPDH, TBP">
+        <div class="hint">Must be a subset of genes above — used for normalization (ΔCt)</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:18px">
+      <div class="fg">
+        <label>Groups & biological replicates <span style="color:var(--mu);text-transform:none;letter-spacing:0">(one per line: GroupName: n)</span></label>
+        <textarea id="a-groups-inp" style="height:110px" oninput="syncCtrl()" placeholder="WT: 3&#10;P110G: 3&#10;P84: 3&#10;P101: 3"></textarea>
+        <div class="hint">Samples auto-named: WT_1, WT_2, WT_3…</div>
+      </div>
+      <div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+          <div class="fg"><label>Control group</label><select id="a-ctrl"></select></div>
+          <div class="fg"><label>Technical replicates</label><input type="number" id="a-nr" value="3" min="1" max="6"></div>
+        </div>
+        <button class="btn bs" onclick="buildAT()" style="width:100%">⚙ Generate Ct Table</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="a-dc" style="display:none">
+    <div class="ch">
+      <div class="ct"><span class="sp st">2</span>Enter Ct Values</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        
+        <button class="btn bt" onclick="openPasteModal()">📋 Paste</button>
+        <button class="btn bs" onclick="anA()">▶ Analyze</button>
+      </div>
+    </div>
+    <div class="al al-i">Outlier replicate (&gt;0.5 Ct from mean) = <span style="color:var(--wn)">orange</span> — <b>click to exclude</b> (strikethrough)</div>
+    <div id="a-dc-tbl" class="sc"><table><thead id="a-th"></thead><tbody id="a-tb"></tbody></table></div></div>
+  </div>
+
+  <div class="card am-c" id="a-hc" style="display:none">
+    <div class="ch"><div class="ct"><span class="sp sa">🏠</span>Housekeeping Gene Stability</div><div style="display:flex;gap:8px;align-items:center"><div id="hkg-bdg"></div><button class="btn" style="background:none;border:1px solid var(--b2);color:var(--mu);font-size:11px;padding:4px 10px" onclick="toggleCard('hkg-body',this)">▼</button></div></div><div id="hkg-body">
+    <div class="al al-i" style="font-size:12px"><b>M-value</b> = average expression variation relative to all other candidates. <b>M &lt; 0.5 = stable</b>. V(i,j) = SD of ΔCt(i−j) across samples.</div>
+    <div id="hkg-mt" class="mg"></div>
+    <div class="sl">Stability ranking</div>
+    <div class="sc" style="margin-bottom:14px"><table><thead id="hkg-th"></thead><tbody id="hkg-tb"></tbody></table></div>
+    <div class="div"></div><div class="sl">Pairwise matrix V(i,j)</div><div id="hkg-mx" style="margin-bottom:14px"></div>
+    <div class="div"></div><div class="sl">Reference Ct per sample</div><div id="hkg-pl" style="margin-bottom:14px"></div>
+    <div class="div"></div><div id="hkg-rec"></div>
+  </div>
+  <div class="card pu-c" id="a-qcc"><div id="a-qc-plate"></div>
+    <div class="ch"><div class="ct"><span class="sp sp2">QC</span>Quality Report</div><div style="display:flex;gap:8px;align-items:center"><div id="qc-bdg"></div><button class="btn" style="background:none;border:1px solid var(--b2);color:var(--mu);font-size:11px;padding:4px 10px" onclick="toggleCard('qc-body',this)">▼</button></div></div><div id="qc-body">
+    <div style="display:grid;grid-template-columns:72px 1fr;gap:16px;align-items:start;margin-bottom:16px">
+      <div style="text-align:center"><div id="qc-g" class="gau" style="margin:0 auto 5px"></div><div style="font-size:9px;color:var(--mu)">QC Score</div></div>
+      <div id="qc-mt" class="mg" style="margin-bottom:0"></div>
+    </div>
+    <div id="qc-al"></div>
+    <div class="div"></div><div class="sl">Pipetting Precision — SD of technical replicates</div>
+    <div class="al al-i" style="font-size:12px;margin-bottom:10px">SD &lt;0.20 = <span style="color:var(--ok)">Excellent</span> · 0.20–0.50 = <span style="color:var(--wn)">Acceptable</span> · &gt;0.50 = <span style="color:var(--er)">Review</span></div>
+    <div class="sc"><table><thead><tr id="qc-pt"></tr></thead><tbody id="qc-pb"></tbody></table></div>
+    <div class="div"></div><div class="sl">Ct per well</div><div id="qc-dt"></div>
+  </div>
+  <div class="card" id="a-rc" style="display:none">
+    <div class="ch">
+      <div class="ct"><span class="sp st">3</span>Results — 2<sup>−ΔΔCt</sup></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--mu);cursor:pointer">
+          <input type="checkbox" id="log-toggle" onchange="toggleLog()" style="width:14px;height:14px;accent-color:var(--ac)">Log scale
+        </label>
+        <button class="btn bp" onclick="expCSV()">↓ Excel</button>
+      </div>
+    </div>
+    <button class="btn" style="background:none;border:none;color:var(--dm);font-size:12px;font-weight:600;padding:4px 0;cursor:pointer;text-align:left" onclick="toggleSec('a-hm-w',this,'Overview — fold change')">▼ Overview — fold change</button>
+    <div id="a-hm-w"><div id="a-hm" style="margin-bottom:18px"></div>
+    </div></div>
+    <div class="div"></div>
+    <button class="btn" style="background:none;border:none;color:var(--dm);font-size:12px;font-weight:600;padding:4px 0;cursor:pointer" onclick="toggleSec('a-tbl-w',this,'Per-sample results')">▼ Per-sample results</button>
+    <div id="a-tbl-w"><div class="sc" style="margin-bottom:18px"><table><thead id="a-rth"></thead><tbody id="a-rtb"></tbody></table></div>
+    </div></div>
+    <div id="a-stat-sum" style="margin-bottom:18px"></div>
+    <div class="div"></div>
+    <button class="btn" style="background:none;border:none;color:var(--dm);font-size:12px;font-weight:600;padding:4px 0;cursor:pointer" onclick="toggleSec('a-ch-w',this,'Charts')">▼ Charts</button>
+    <div id="a-ch-w"><div id="a-ch" class="cg"></div>
+  </div>
+</div>
+</div>
+
+<script>
+
+// ── LICENSE SYSTEM ───────────────────────────────────
+const _KH='fbe9409d8b10bf838712201b74b6d0a5dc652e3162466d1b3be4db69000c04d5';
+let _pro=false;
+async function _chkKey(k){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k.trim().toUpperCase()));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('')===_KH;
+}
+async function _initLicense(){
+  const stored=localStorage.getItem('qpcr_lic');
+  if(stored&&await _chkKey(stored)){_pro=true;_hideLic();return}
+  g('lic-overlay').style.display='flex';
+}
+function _hideLic(){
+  const o=g('lic-overlay');if(o)o.style.display='none';
+  g('pro-badge').style.display='inline-flex';
+}
+async function _submitKey(){
+  const k=g('lic-key-inp').value.trim().toUpperCase();
+  if(!k)return;
+  const ok=await _chkKey(k);
+  if(ok){
+    localStorage.setItem('qpcr_lic',k);
+    _pro=true;_hideLic();
+  }else{
+    const err=g('lic-err');err.textContent='Invalid key. Purchase at ko-fi.com/kmbio';err.style.display='block';
+  }
+}
+function _enterDemo(){g('lic-overlay').style.display='none'}
+const GC=['#2878b5','#ee8533','#2ca02c','#d62728','#9467bd','#8c564b'];
+let vCharts={},aCI=[],logScale=false,_reTimerA=null,_reTimerV={};
+const S={v:{df:10,np:5,nr:3,sc:1,genes:[]},a:{genes:[],hkg:[],groups:[],samples:[],ctrlGroup:'',nr:3,excl:new Set(),hkgDisabled:new Set()}};
+
+// ── MATH / STATS ────────────────────────────────────
+const median=a=>{const v=[...a].filter(x=>x!=null&&!isNaN(x)).sort((a,b)=>a-b);if(!v.length)return null;const m=Math.floor(v.length/2);return v.length%2?v[m]:(v[m-1]+v[m])/2};
+const mean=a=>{const v=a.filter(x=>x!=null&&!isNaN(x));return v.length?v.reduce((s,x)=>s+x,0)/v.length:null};
+const sd=a=>{const m=mean(a);if(m==null)return null;const v=a.filter(x=>x!=null&&!isNaN(x));if(v.length<2)return null;return Math.sqrt(v.map(x=>(x-m)**2).reduce((s,x)=>s+x,0)/(v.length-1))};
+const se=a=>{const s=sd(a),n=a.filter(x=>x!=null&&!isNaN(x)).length;return s!=null&&n?s/Math.sqrt(n):null};
+const f=(v,d=2)=>v==null||isNaN(v)?'—':Number(v).toFixed(d);
+const escH=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const sanN=s=>String(s).replace(/[<>'"&;\\]/g,'').trim().slice(0,50);
+const gv=id=>{const e=document.getElementById(id);if(!e||e.value==='')return null;const v=parseFloat(e.value);return isNaN(v)?null:v};
+function lr(xs,ys){const n=xs.length;if(n<2)return null;const xm=mean(xs),ym=mean(ys);let xy=0,xx=0,yy=0;for(let i=0;i<n;i++){xy+=(xs[i]-xm)*(ys[i]-ym);xx+=(xs[i]-xm)**2;yy+=(ys[i]-ym)**2;}if(!xx||!yy)return null;return{slope:xy/xx,intercept:ym-(xy/xx)*xm,r2:(xy**2)/(xx*yy)}}
+const lgam=x=>{const c=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,1.208650973866179e-3,-5.395239384953e-6];let y=x,t=x+5.5,s=1.000000000190015;t-=(x+.5)*Math.log(t);for(let i=0;i<6;i++)s+=c[i]/++y;return Math.log(2.5066282746310005*s/x)-t};
+const bCF=(x,a,b)=>{let c=1,d=1-(a+b)*x/(a+1),h;if(Math.abs(d)<1e-30)d=1e-30;d=1/d;h=d;for(let m=1;m<200;m++){const m2=2*m;let aa=m*(b-m)*x/((a+m2-1)*(a+m2));d=1+aa*d;c=1+aa/c;if(Math.abs(c)<1e-30)c=1e-30;if(Math.abs(d)<1e-30)d=1e-30;d=1/d;h*=d*c;aa=-(a+m)*(a+b+m)*x/((a+m2)*(a+m2+1));d=1+aa*d;c=1+aa/c;if(Math.abs(c)<1e-30)c=1e-30;if(Math.abs(d)<1e-30)d=1e-30;d=1/d;const del=d*c;h*=del;if(Math.abs(del-1)<3e-7)break}return h};
+const bI=(x,a,b)=>{if(x<=0)return 0;if(x>=1)return 1;const bt=Math.exp(lgam(a+b)-lgam(a)-lgam(b)+a*Math.log(x)+b*Math.log(1-x));return x<(a+1)/(a+b+2)?bt*bCF(x,a,b)/a:1-bt*bCF(1-x,b,a)/b};
+const tpv=(t,df)=>bI(df/(df+t*t),df/2,.5);
+function welchT(a,b){const n1=a.length,n2=b.length;if(n1<2||n2<2)return null;const m1=mean(a),m2=mean(b),s1=sd(a),s2=sd(b);if(s1==null||s2==null)return null;const v1=s1**2/n1,v2=s2**2/n2,se2=Math.sqrt(v1+v2);if(se2==null||se2===0)return null;const t=Math.abs((m1-m2)/se2),df=(v1+v2)**2/(v1**2/(n1-1)+v2**2/(n2-1));return{t,df,p:tpv(t,df)}}
+function pSt(p){return p<=1e-4?'****':p<=1e-3?'***':p<=.01?'**':p<=.05?'*':'ns'}
+function anova(vals){
+  // vals: {group: [values]}
+  const groups=Object.values(vals),allV=groups.flat();
+  const n=allV.length,k=groups.length;
+  if(k<2||n<=k)return null;
+  const gm=mean(allV);
+  let ssb=0,ssw=0;
+  groups.forEach(v=>{const m2=mean(v);ssb+=v.length*(m2-gm)**2;v.forEach(x=>ssw+=(x-m2)**2)});
+  const dfb=k-1,dfw=n-k;
+  if(ssw===0)return null;
+  const F=(ssb/dfb)/(ssw/dfw);
+  const p=bI(dfw/(dfw+dfb*F),dfw/2,dfb/2); // F-dist p-value via incomplete beta
+  return{F,dfb,dfw,p};
+}
+function bhFDR(pairs){
+  if(!pairs.length)return pairs;
+  const m=pairs.length;
+  const sorted=[...pairs].sort((a,b)=>a.p-b.p);
+  sorted.forEach((p,i)=>{p._bh=Math.min(1,p.p*m/(i+1))});
+  // Enforce monotonicity
+  for(let i=m-2;i>=0;i--)sorted[i]._bh=Math.min(sorted[i]._bh,sorted[i+1]._bh);
+  pairs.forEach(p=>{p.pAdj=p._bh;p.stars=pSt(p.pAdj);delete p._bh});
+  return pairs;
+}
+function calcSt(rEx,gi){
+  const gs=S.a.groups,n=gs.length;if(n<2)return null;
+  const vals={};gs.forEach(gr=>{vals[gr]=S.a.samples.map((s,si)=>s.group===gr?rEx[si][gi]:null).filter(x=>x!=null)});
+  const result={pairs:[],anova:null};
+  if(n>=3){result.anova=anova(vals)}
+  const pairs=[];
+  for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const r=welchT(vals[gs[i]],vals[gs[j]]);if(r)pairs.push({g1:gs[i],g2:gs[j],t:r.t,df:r.df,p:r.p,pAdj:r.p,stars:pSt(r.p)})}
+  result.pairs=pairs.length?bhFDR(pairs):[];
+  return (result.anova||result.pairs.length)?result:null
+}
+function g(id){return document.getElementById(id)}
+function sw(id,btn){document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));g('pg-'+id).classList.add('on');btn.classList.add('on')}
+
+// ── DEMO DATA ────────────────────────────────────────
+// Validation: 2 genes, 5-point 10x dilution, 3 reps (point 3 rep 2 outlier for GAPDH)
+const VD={
+  GAPDH:[[20.12,20.09,20.15],[23.44,23.41,23.47],[26.78,27.41,26.81],[30.11,30.08,30.14],[33.45,33.41,33.49]],
+  TBP:  [[22.05,22.02,22.08],[25.38,25.35,25.41],[28.71,28.68,28.74],[32.04,32.01,32.07],[35.37,35.34,35.40]]
+};
+// Analysis: GAPDH+TBP (HKG), IL-6 (+5x), TNF-α (+3x), 5 groups × 3 reps
+const AD={
+  genesInp:'GAPDH, TBP, IL-6',hkgInp:'GAPDH, TBP',
+  groupsInp:'Control: 3\nKO: 3\nRescue: 3',
+  ctrlGroup:'Control',nr:3,
+  ct:[ // [si][gi][rep] — 9 samples × 3 genes × 3 reps
+    [[20.12,20.15,20.09],[22.08,22.11,22.05],[28.05,28.08,28.02]], // Control_1
+    [[20.24,20.21,20.27],[22.21,22.24,22.18],[28.13,28.16,28.10]], // Control_2
+    [[19.98,20.01,19.95],[22.01,22.04,21.98],[27.91,27.94,27.88]], // Control_3
+    [[20.18,20.15,20.21],[22.15,22.18,22.12],[26.42,26.45,26.39]], // KO_1  (~3x up)
+    [[20.31,20.28,20.34],[22.28,22.31,22.25],[26.55,26.58,26.52]], // KO_2
+    [[20.05,20.02,20.08],[22.05,22.08,22.02],[26.29,26.32,26.26]], // KO_3
+    [[20.22,20.19,20.25],[22.19,22.22,22.16],[27.42,27.45,27.39]], // Rescue_1 (~1.5x)
+    [[20.10,20.07,20.13],[22.07,22.10,22.04],[27.55,27.58,27.52]], // Rescue_2
+    [[20.35,20.32,20.38],[22.32,22.35,22.29],[27.29,27.32,27.26]]  // Rescue_3
+  ]
+};
+function loadVD(){['v-df','v-np','v-nr','v-sc'].forEach((id,i)=>g(id).value=[10,5,3,1][i]);S.v.genes=['GAPDH','TBP'];renderVGenes();buildVT();setTimeout(()=>{Object.entries(VD).forEach(([gn,data],gi)=>{data.forEach((r,i)=>{r.forEach((v,j)=>{const e=g(`vct_${gi}_${i}_${j}`);if(e)e.value=v});vRU(gi,i)})})},60)}
+function loadAD(){g('a-genes-inp').value=AD.genesInp;g('a-hkg-inp').value=AD.hkgInp;g('a-groups-inp').value=AD.groupsInp;buildAT();setTimeout(()=>{AD.ct.forEach((sd2,si)=>{sd2.forEach((gd,gi)=>{gd.forEach((v,r)=>{const e=g(`act_${si}_${gi}_${r}`);if(e)e.value=v});aU(si,gi)})})},80)}
+
+// ── SAVE / LOAD ──────────────────────────────────────
+function saveSession(_a,_b,_c,_d){if(!_demoGuard())return;return _saveSession(_a,_b,_c,_d)}
+function _saveSession(){
+  const vCts={};for(let gi=0;gi<S.v.genes.length;gi++)for(let i=0;i<S.v.np;i++)for(let r=0;r<S.v.nr;r++){const e=g(`vct_${gi}_${i}_${r}`);if(e&&e.value)vCts[`${gi}_${i}_${r}`]=e.value}
+  const aCts={};for(let si=0;si<S.a.samples.length;si++)for(let gi=0;gi<S.a.genes.length;gi++)for(let r=0;r<S.a.nr;r++){const e=g(`act_${si}_${gi}_${r}`);if(e&&e.value)aCts[`${si}_${gi}_${r}`]=e.value}
+  const sess={version:5,v:S.v,a:{...S.a,excl:[...S.a.excl]},vCts,aCts,genesInp:g('a-genes-inp')?.value,hkgInp:g('a-hkg-inp')?.value,groupsInp:g('a-groups-inp')?.value};
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(sess,null,2)],{type:'application/json'}));a.download='qpcr_session.json';a.click()
+}
+function loadSession(evt){const file=evt.target.files[0];if(!file)return;const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);// Basic session integrity check
+const sv=d.v,sa=d.a;
+if(sv&&typeof sv.df==='number')Object.assign(S.v,sv);
+if(sa&&Array.isArray(sa.genes)&&Array.isArray(sa.groups)&&Array.isArray(sa.samples)){
+  Object.assign(S.a,{
+    ...sa,
+    genes:Array.isArray(sa.genes)?sa.genes.map(sanN).filter(Boolean):[],
+    hkg:Array.isArray(sa.hkg)?sa.hkg.map(sanN).filter(Boolean):[],
+    groups:Array.isArray(sa.groups)?sa.groups.map(sanN).filter(Boolean):[],
+    samples:Array.isArray(sa.samples)?sa.samples.slice(0,500).map(s=>({...s,name:sanN(s.name||''),group:sanN(s.group||'')})):[],
+    excl:new Set(Array.isArray(sa.excl)?sa.excl:[])
+  });
+}if(d.genesInp)g('a-genes-inp').value=d.genesInp;if(d.hkgInp)g('a-hkg-inp').value=d.hkgInp;if(d.groupsInp)g('a-groups-inp').value=d.groupsInp;renderVGenes();const cs=g('a-ctrl');cs.innerHTML=S.a.groups.map(n=>`<option>${n}</option>`).join('');if(Object.keys(d.vCts||{}).length){buildVT();setTimeout(()=>{Object.entries(d.vCts).forEach(([k,v])=>{const el=g('vct_'+k);if(el){el.value=v;vRU(parseInt(k),parseInt(k.split('_')[1]))}})},60)}if(Object.keys(d.aCts||{}).length){g('a-ctrl').value=S.a.ctrlGroup;g('a-nr').value=S.a.nr;buildATfromState();setTimeout(()=>{Object.entries(d.aCts).forEach(([k,v])=>{const el=g('act_'+k);if(el){el.value=v;const[si,gi]=k.split('_');aU(parseInt(si),parseInt(gi))}});S.a.excl.forEach(id=>{const el=g(id);if(el)el.classList.replace('out','excl')})},80)}alert('Session loaded ✓')}catch(ex){alert('Error reading file')}};r.readAsText(file)}
+
+// ── PASTE ────────────────────────────────────────────
+function openPasteModal(){g('paste-area').value='';g('paste-info').textContent='';g('paste-modal').classList.add('show')}
+function closePasteModal(){g('paste-modal').classList.remove('show')}
+let _suspendAnalysis=false;
+function doPaste(){const raw=g('paste-area').value.trim();if(!raw)return;const rows=raw.split('\n').map(r=>r.split(/\t|,/).map(c=>c.trim()));const{samples,genes,nr}=S.a;let filled=0;rows.forEach((row,si)=>{if(si>=samples.length)return;let col=0;genes.forEach((_,gi)=>{for(let r=0;r<nr;r++){if(col<row.length){const v=parseFloat(row[col]);const el=g(`act_${si}_${gi}_${r}`);if(el&&!isNaN(v)){el.value=v;filled++}}col++}});});_suspendAnalysis=true;for(let si=0;si<samples.length;si++)for(let gi=0;gi<genes.length;gi++)aU(si,gi);_suspendAnalysis=false;if(g('a-rc').style.display!=='none')anA();g('paste-info').textContent=`✓ ${filled} values imported`;setTimeout(closePasteModal,1200)}
+
+// ── EXPORT CHART PNG ────────────────────────────────
+function expChart(ch,fname,lines){
+  // Simple direct export (fallback)
+  const a=document.createElement('a');a.href=ch.toBase64Image('image/png',1);a.download=fname;document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+function _buildComposite(ch, fname, headerFn){
+  const SCALE=3;
+  // Force 3x DPR on chart before capture → sharp pixels, no upscaling
+  const origDPR=ch.options.devicePixelRatio||window.devicePixelRatio||1;
+  try{ch.options.devicePixelRatio=SCALE;ch.resize();}catch(e){}
+  const src=ch.toBase64Image('image/png',1);
+  try{ch.options.devicePixelRatio=origDPR;ch.resize();}catch(e){}
+
+  const img=new Image();
+  img.onload=function(){
+    // img is now SCALE× the CSS size → convert back to CSS coords
+    const cssW=Math.round(img.width/SCALE);
+    const cssH=Math.round(img.height/SCALE);
+    const panelH=160;
+    const cv=document.createElement('canvas');
+    cv.width=cssW*SCALE;cv.height=(cssH+panelH)*SCALE;
+    const ctx=cv.getContext('2d');
+    ctx.scale(SCALE,SCALE); // work in CSS coords throughout
+    ctx.fillStyle='#fff';ctx.fillRect(0,0,cssW,cssH+panelH);
+    // Draw chart 1:1 in output pixels → sharp
+    ctx.drawImage(img,0,0,cssW,cssH);
+    // Panel
+    ctx.fillStyle='#f7f9fd';ctx.fillRect(0,cssH,cssW,panelH);
+    ctx.fillStyle='#e8ecf5';ctx.fillRect(0,cssH,cssW,1);
+    // Callback receives CSS coords → text positions are correct
+    headerFn(ctx,cssW,cssH);
+    cv.toBlob(blob=>{
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+    },'image/png');
+  };
+  img.src=src;
+}
+
+function expVChart(_a,_b,_c,_d){if(!_demoGuard())return;return _expVChart(_a,_b,_c,_d)}
+function _expVChart(gi,gn){
+  const ch=vCharts[gi];if(!ch)return;
+  const ec=g(`v-ec-${gi}`)?.textContent||'';
+  // Get first line of equation only (innerHTML has <br> between lines)
+  const eqEl=g(`v-eq-${gi}`);
+  const eq=(eqEl?.innerHTML||'').split(/<br\s*\/?>/i)[0].replace(/<[^>]+>/g,'').trim();
+  _buildComposite(ch,`validation_${gn||gi}.png`,(ctx,W,cH)=>{
+    const PAD=20,LH=22;
+    let y=cH+PAD+14;
+    // Gene name — measure width BEFORE switching font
+    ctx.font='bold 14px Arial';ctx.fillStyle='#0d9488';
+    const gnW=ctx.measureText(gn).width;
+    ctx.fillText(gn,PAD,y);
+    // Stats right after, same baseline
+    ctx.font='12px monospace';ctx.fillStyle='#4a5572';
+    ctx.fillText(ec,PAD+gnW+14,y);
+    y+=LH;
+    // Equation (first line only, no duplicate R²/E)
+    ctx.font='11px monospace';ctx.fillStyle='#4a5572';
+    ctx.fillText(eq,PAD,y);
+    y+=LH-2;
+    // Params
+    ctx.font='10px Arial';ctx.fillStyle='#8a95b0';
+    ctx.fillText(`${S.v.df}x dilution · ${S.v.np} points · ${S.v.nr} replicates/point`,PAD,y);
+    y+=LH;
+    // Separator + footer
+    ctx.strokeStyle='#e8ecf5';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(PAD,y);ctx.lineTo(W-PAD,y);ctx.stroke();
+    y+=12;
+    ctx.font='9px Arial';ctx.fillStyle='#b0bac8';
+    ctx.fillText('qPCR Analyst — Standard curve validation',PAD,y);
+  });
+}
+
+function expAChart(_a,_b,_c,_d){if(!_demoGuard())return;return _expAChart(_a,_b,_c,_d)}
+function _expAChart(idx,gn,gStRow,stRow){
+  const ch=aCI[idx];if(!ch)return;
+  _buildComposite(ch,`expression_${gn}.png`,(ctx,W,cH)=>{
+    const groups=S.a.groups;
+    let y=cH+20;
+    // Gene name
+    ctx.font='bold 14px Arial';ctx.fillStyle='#1e2438';ctx.fillText(gn,16,y);
+    y+=16;
+    ctx.font='9px Arial';ctx.fillStyle='#8a95b0';
+    ctx.fillText(`Ref: mean(${S.a.hkg.join(', ')}) · Control: ${S.a.ctrlGroup} · Method: 2⁻ᐩᐩᶜᵗ`,16,y);
+    y+=16;ctx.fillStyle='#e8ecf5';ctx.fillRect(16,y,W-32,1);y+=12;
+    // Group means table
+    const colW=Math.min(160,(W-32)/Math.max(groups.length,1));
+    groups.forEach((gr,gi)=>{
+      const gs=gStRow?.[gr];const x=16+gi*colW;
+      ctx.fillStyle=GC[gi%GC.length];ctx.font='bold 9px Arial';ctx.fillText('● '+gr,x,y);
+      ctx.fillStyle='#1e2438';ctx.font='11px monospace';
+      ctx.fillText(gs?.mean!=null?f(gs.mean,3)+'×':'—',x,y+14);
+      ctx.fillStyle='#8a95b0';ctx.font='8px Arial';
+      ctx.fillText(gs?.sem!=null?'±'+f(gs.sem,3)+' SEM':'',x,y+26);
+    });
+    y+=42;
+    // Stats
+    if(stRow&&stRow.length){
+      ctx.fillStyle='#e8ecf5';ctx.fillRect(16,y,W-32,1);y+=10;
+      stRow.forEach(p=>{
+        const stCol=p.stars==='ns'?'#8a95b0':p.stars==='*'?'#d97706':p.stars==='**'?'#d97706':'#dc2626';
+        ctx.fillStyle=stCol;ctx.font='bold 9px Arial';ctx.fillText(p.stars,16,y);
+        ctx.fillStyle='#4a5572';ctx.font='9px Arial';
+        ctx.fillText(`${p.g1} vs ${p.g2}  p=${p.pAdj<0.001?p.pAdj.toExponential(1):f(p.pAdj,3)} (BH-FDR)`,36,y);
+        y+=14;
+      });
+    }
+    y+=4;ctx.fillStyle='#e8ecf5';ctx.fillRect(16,y,W-32,1);y+=10;
+    ctx.fillStyle='#8a95b0';ctx.font='8px Arial';ctx.fillText('qPCR Analyst — Expression Analysis',16,y);
+  });
+}
+
+
+function toggleGene(gi){
+  const body=g('v-body-'+gi),btn=g('v-tog-'+gi);
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'';
+  btn.textContent=open?'▶ Show':'▼ Hide';
+}
+function addVG(){const i=g('v-gi'),n=i.value.trim();if(!n||S.v.genes.includes(n))return;S.v.genes.push(n);i.value='';renderVGenes()}
+function removeVG(n){S.v.genes=S.v.genes.filter(x=>x!==n);renderVGenes()}
+function renderVGenes(){g('v-gl').innerHTML=S.v.genes.map(n=>`<div class="tag"><span style="font-family:var(--mo);font-size:12px">${n}</span><button class="xb" data-g="${escH(n)}" onclick="removeVG(this.dataset.g)">×</button></div>`).join('')||'<span class="hint">No genes yet…</span>'}
+function buildVT(){const df=parseFloat(g('v-df').value),np=parseInt(g('v-np').value),nr=parseInt(g('v-nr').value),sc=parseFloat(g('v-sc').value)||1;if(isNaN(df)||df<=1||np<3||nr<1)return;const genes=S.v.genes.length?S.v.genes:['Gene 1'];if(!S.v.genes.length){S.v.genes=['Gene 1'];renderVGenes()}S.v={df,np,nr,sc,genes:S.v.genes};Object.values(vCharts).forEach(c=>c.destroy());Object.keys(vCharts).forEach(k=>delete vCharts[k]);const cont=g('v-gene-cards');cont.innerHTML='';genes.forEach((gn,gi)=>{let th=`<th style="position:sticky;left:0;z-index:2;background:var(--s3)">Pt</th><th style="position:sticky;left:40px;z-index:2;background:var(--s3)">Dilution</th><th style="position:sticky;left:100px;z-index:2;background:var(--s3)">Log₁₀(C)</th>`;for(let r=1;r<=nr;r++)th+=`<th>Rep ${r}</th>`;th+=`<th>Mean</th><th>SD</th><th>CV%</th>`;let tb='';for(let i=0;i<np;i++){const lc=Math.log10(sc/Math.pow(df,i)),_base=sc>0&&sc<1?Math.round(1/sc):1,dl=`1:${(_base*Math.pow(df,i)).toLocaleString()}`;tb+=`<tr><td style="color:var(--tx);position:sticky;left:0;background:#fff;z-index:1">${i+1}</td><td style="position:sticky;left:40px;background:#fff;z-index:1">${dl}</td><td style="color:var(--ac);position:sticky;left:100px;background:#fff;z-index:1">${lc.toFixed(2)}</td>`;for(let r=0;r<nr;r++)tb+=`<td><input type="number" id="vct_${gi}_${i}_${r}" step="0.001" placeholder="—" oninput="vRU(${gi},${i});if(g('v-res-${gi}')?.style.display!=='none'){clearTimeout(_reTimerV[${gi}]);_reTimerV[${gi}]=setTimeout(()=>anVG(${gi}),800)}" onclick="exclVT(this,${gi},${i},${r})" onpaste="handleVPaste(event,${gi},${i},${r})"></td>`;tb+=`<td id="vm_${gi}_${i}">—</td><td id="vs_${gi}_${i}">—</td><td id="vc_${gi}_${i}" style="color:var(--mu)">—</td></tr>`}const card=document.createElement('div');card.className='card';card.style.borderColor='rgba(13,148,136,.14)';card.innerHTML=`<div class="ch"><div class="ct"><span class="sp st" style="font-size:9px">${gi+1}</span><span style="font-family:var(--mo);font-size:14px;font-weight:600">${gn}</span></div><div style="display:flex;gap:8px"><button id="v-tog-${gi}" class="btn" style="background:none;border:1px solid var(--b2);color:var(--mu);font-size:11px" onclick="toggleGene(${gi})">▼ Hide</button><button class="btn bs" onclick="anVG(${gi})">▶ Analyze</button></div></div><div id="v-body-${gi}"><div class="al al-i" style="font-size:12px">Outlier replicate (&gt;0.5 Ct) = orange · click to exclude</div><div class="sc"><table><thead><tr>${th}</tr></thead><tbody>${tb}</tbody></table></div><div id="v-res-${gi}" style="display:none"><div class="div"></div><div class="ch" style="margin-bottom:14px"><div id="v-ov-${gi}"></div><div style="display:flex;gap:8px;align-items:center"><span id="v-ec-${gi}" style="font-size:12px;color:var(--mu);font-family:var(--mo)"></span><button class="btn bt" style="font-size:11px" onclick="expVChart(${gi},'${gn}')">📷 PNG</button></div></div><div id="v-mt-${gi}" class="mg"></div><div style="display:grid;grid-template-columns:1.2fr 1fr;gap:16px"><div class="bx" style="height:310px"><canvas id="v-ch-${gi}"></canvas></div><div><div class="sl">Acceptance criteria</div><div id="v-cr-${gi}"></div><div class="div"></div><div class="sl">Equation</div><div id="v-eq-${gi}" style="font-family:var(--mo);font-size:13px;color:var(--dm);line-height:2.1"></div></div></div><div class="div"></div><div class="sl">🧪 Pipetting QC — ${gn}</div><div id="v-qc-${gi}"></div></div></div>`;cont.appendChild(card)})}
+function vRU(gi,i){const nr=S.v.nr,vals=[];for(let r=0;r<nr;r++){const _e=g(`vct_${gi}_${i}_${r}`);if(_e&&!_e.classList.contains('excl'))vals.push(gv(`vct_${gi}_${i}_${r}`))}const v=vals.filter(x=>x!=null);if(!v.length){['vm','vs','vc'].forEach(p=>{const e=g(`${p}_${gi}_${i}`);if(e)e.textContent='—'});return}const m=mean(v),s=sd(v),cv=s?(s/m)*100:null;const em=g(`vm_${gi}_${i}`);if(em)em.textContent=f(m,3);const c=s==null?'var(--dm)':s<0.2?'var(--ok)':s<0.5?'var(--wn)':'var(--er)';const es=g(`vs_${gi}_${i}`);if(es)es.innerHTML=s!=null?`<span style="color:${c}">${f(s,3)}</span>`:'—';const ec=g(`vc_${gi}_${i}`);if(ec)ec.textContent=cv!=null?f(cv,1)+'%':'—';const _vmed=median(v);if(_vmed!=null&&v.length>1)for(let r=0;r<nr;r++){const el=g(`vct_${gi}_${i}_${r}`);if(!el||el.value===''){el&&el.classList.remove('out');continue}if(el.classList.contains('excl'))continue;el.classList.toggle('out',Math.abs(parseFloat(el.value)-_vmed)>0.5)}}
+function anVG(gi){const{df,np,nr,sc}=S.v,pts=[],aX=[],aY=[];for(let i=0;i<np;i++){const lc=Math.log10(sc/Math.pow(df,i)),vals=[];for(let r=0;r<nr;r++){const id=`vct_${gi}_${i}_${r}`;const el=g(id);if(el&&!el.classList.contains('excl'))vals.push(gv(id))}const v=vals.filter(x=>x!=null);if(!v.length)continue;pts.push({lc,mean:mean(v),sd:sd(v)});v.forEach(x=>{aX.push(lc);aY.push(x)})}if(pts.length<3){alert('Need at least 3 points');return}const reg=lr(aX,aY);if(!reg)return;const{slope,intercept,r2}=reg,eff=(Math.pow(10,-1/slope)-1)*100;const ec=eff>=90&&eff<=110?'ok':(eff>=80||eff<=120)?'wn':'bd',rc=r2>=0.99?'ok':r2>=0.98?'wn':'bd';const gn=S.v.genes[gi]||`Gene ${gi+1}`;g(`v-res-${gi}`).style.display='';g(`v-ec-${gi}`).textContent=`R²=${f(r2,4)} · E=${f(eff,1)}%`;g(`v-mt-${gi}`).innerHTML=`<div class="mc ${rc}"><div class="ml">R²</div><div class="mv">${f(r2,4)}</div></div><div class="mc ${ec}"><div class="ml">Efficiency</div><div class="mv">${f(eff,1)}</div><div class="mu2">% (90–110)</div></div><div class="mc"><div class="ml">Slope</div><div class="mv" style="font-size:17px;color:var(--dm)">${f(slope,3)}</div></div><div class="mc"><div class="ml">Y-intercept</div><div class="mv" style="font-size:17px;color:var(--dm)">${f(intercept,2)}</div></div><div class="mc"><div class="ml">Points used</div><div class="mv" style="font-size:17px;color:var(--dm)">${pts.length}/${np}</div></div>`;const crit=[{l:'R² ≥ 0.99',p:r2>=0.99,a:r2>=0.98&&r2<0.99,v:f(r2,4)},{l:'Efficiency 90–110%',p:eff>=90&&eff<=110,a:(eff>=80&&eff<90)||(eff>110&&eff<=120),v:f(eff,1)+'%'},{l:'Slope −3.58 to −3.10',p:slope>=-3.58&&slope<=-3.10,a:slope>=-3.70&&slope<=-3.00,v:f(slope,3)}];g(`v-cr-${gi}`).innerHTML=crit.map(c=>`<div class="cr"><span style="font-size:13px;color:var(--dm)">${c.l}</span><div style="display:flex;gap:7px;align-items:center"><span style="font-family:var(--mo);font-size:11px;color:var(--mu)">${c.v}</span><span class="bdg ${c.p?'bok':c.a?'bwn':'bbd'}">${c.p?'✓':c.a?'⚠':'✗'}</span></div></div>`).join('');const ok=crit.every(c=>c.p),fail=crit.some(c=>!c.p&&!c.a);g(`v-ov-${gi}`).innerHTML=`<span class="bdg ${ok?'bok':fail?'bbd':'bwn'}" style="font-size:12px;padding:4px 12px">${gn} — ${ok?'✓ Valid':fail?'✗ Failed':'⚠ Borderline'}</span>`;g(`v-eq-${gi}`).innerHTML=`Ct = ${f(slope,3)} × log₁₀(C) + ${f(intercept,2)}<br>R² = ${f(r2,4)} · E = ${f(eff,1)}%`;vQC(pts,gi);if(vCharts[gi])vCharts[gi].destroy();const xPad=.3,xMin=Math.min(...aX)-xPad,xMax=Math.max(...aX)+xPad;const ebP={id:`eb${gi}`,afterDatasetsDraw(ch){const ctx=ch.ctx,ds=ch.data.datasets[0];if(!ds.sds)return;ch.getDatasetMeta(0).data.forEach((pt,j)=>{const sv=ds.sds[j];if(!sv)return;const x=pt.x,yT=ch.scales.y.getPixelForValue(ds.data[j].y+sv),yB=ch.scales.y.getPixelForValue(ds.data[j].y-sv);ctx.save();ctx.beginPath();ctx.strokeStyle='#0d9488';ctx.lineWidth=2;ctx.moveTo(x,yT);ctx.lineTo(x,yB);ctx.moveTo(x-5,yT);ctx.lineTo(x+5,yT);ctx.moveTo(x-5,yB);ctx.lineTo(x+5,yB);ctx.stroke();ctx.restore()})}};vCharts[gi]=new Chart(g(`v-ch-${gi}`),{type:'scatter',plugins:[ebP],data:{datasets:[{label:'Mean Ct ±SD',data:pts.map(p=>({x:p.lc,y:p.mean})),sds:pts.map(p=>p.sd),backgroundColor:'#0d9488',borderColor:'#0d9488',pointRadius:7},{label:'Regression',data:[{x:xMin,y:slope*xMin+intercept},{x:xMax,y:slope*xMax+intercept}],type:'line',borderColor:'#7c3aed',borderWidth:2,borderDash:[6,4],pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#4a5572',font:{size:11}}}},scales:{x:{title:{display:true,text:'Log₁₀(Conc.)',color:'#4a5572',font:{size:12}},ticks:{color:'#4a5572',font:{family:'DM Mono',size:10}},grid:{color:'#eef1f8'},border:{display:false}},y:{title:{display:true,text:'Ct',color:'#4a5572',font:{size:12}},ticks:{color:'#4a5572',font:{family:'DM Mono',size:10}},grid:{color:'#eef1f8'},border:{display:false}}}}})}
+function vQC(pts,gi){const aSDs=pts.map(p=>p.sd).filter(x=>x!=null),mSD=mean(aSDs),mxSD=aSDs.length?Math.max(...aSDs):null;let outs=0;for(let i=0;i<S.v.np;i++){const v=[];for(let r=0;r<S.v.nr;r++){const el=g(`vct_${gi}_${i}_${r}`);if(el&&!el.classList.contains('excl'))v.push(gv(`vct_${gi}_${i}_${r}`))}const vf=v.filter(x=>x!=null),m=mean(vf);if(m!=null)vf.forEach(x=>{if(Math.abs(x-m)>0.5)outs++})}const ps=aSDs.length?(aSDs.filter(s=>s<=0.5).length/aSDs.length)*100:100;const pc=ps>=90?'ok':ps>=70?'wn':'bd';let h=`<div class="mg"><div class="mc ${pc}"><div class="ml">Precision score</div><div class="mv">${f(ps,0)}</div><div class="mu2">% ≤ 0.5 SD</div></div><div class="mc ${mSD!=null&&mSD<0.2?'ok':mSD!=null&&mSD<0.5?'wn':'bd'}"><div class="ml">Mean SD</div><div class="mv" style="font-size:17px">${f(mSD,3)}</div></div><div class="mc ${mxSD!=null&&mxSD<0.3?'ok':mxSD!=null&&mxSD<0.6?'wn':'bd'}"><div class="ml">Max SD</div><div class="mv" style="font-size:17px">${f(mxSD,3)}</div></div><div class="mc ${outs===0?'ok':outs<=1?'wn':'bd'}"><div class="ml">Outliers</div><div class="mv" style="font-size:17px">${outs}</div></div></div><div class="sc"><table><thead><tr><th>Pt</th><th>Dilution</th><th>N</th><th>Mean</th><th>SD</th><th>CV%</th><th>Status</th></tr></thead><tbody>`;for(let i=0;i<S.v.np;i++){const _b2=S.v.sc>0&&S.v.sc<1?Math.round(1/S.v.sc):1,dl=`1:${(_b2*Math.pow(S.v.df,i)).toLocaleString()}`;const v=[];const nTot=S.v.nr;let nExcl=0;for(let r=0;r<nTot;r++){const el=g(`vct_${gi}_${i}_${r}`);if(el&&el.classList.contains('excl')){nExcl++;continue}v.push(gv(`vct_${gi}_${i}_${r}`))}const vf=v.filter(x=>x!=null);if(!vf.length){h+=`<tr><td>${i+1}</td><td>${dl}</td><td colspan="5" style="color:var(--mu)">—</td></tr>`;continue}const m=mean(vf),s=sd(vf),cv=s?(s/m)*100:null;const clr=s==null?'var(--dm)':s<0.2?'var(--ok)':s<0.5?'var(--wn)':'var(--er)';const cls=s==null?'':s<0.2?'bok':s<0.5?'bwn':'bbd';const nLabel=nExcl>0?`<span style="color:var(--ok)">${vf.length}</span>/<span style="color:var(--er);text-decoration:line-through">${nTot}</span>`:`${vf.length}/${nTot}`;h+=`<tr><td style="color:var(--tx)">${i+1}</td><td>${dl}</td><td>${nLabel}</td><td>${f(m,3)}</td><td><span style="color:${clr}">${f(s,3)}</span></td><td style="color:var(--mu)">${cv!=null?f(cv,1)+'%':'—'}</td><td><span class="bdg ${cls}">${s<0.2?'✓ Excellent':s<0.5?'⚠ OK':'✗ Review'}</span></td></tr>`}h+=`</tbody></table></div>`;g(`v-qc-${gi}`).innerHTML=h}
+
+// ── ANALYSIS SETUP ──────────────────────────────────
+function syncCtrl(){
+  const groups=g('a-groups-inp').value.trim().split('\n').map(l=>sanN(l.split(':')[0])).filter(Boolean);
+  const cs=g('a-ctrl'),cc=cs.value;
+  cs.innerHTML=groups.map(n=>`<option${n===cc?' selected':''}>${n}</option>`).join('');
+}
+function buildAT(){
+  const genesRaw=g('a-genes-inp').value.trim();const hkgRaw=g('a-hkg-inp').value.trim();const groupsRaw=g('a-groups-inp').value.trim();
+  if(!genesRaw){alert('Enter at least one gene');return}if(!hkgRaw){alert('Enter at least one reference gene');return}if(!groupsRaw){alert('Enter groups and replicate counts');return}
+  const genes=genesRaw.split(/[,;]/).map(sanN).filter(Boolean);
+  const hkg=hkgRaw.split(/[,;]/).map(sanN).filter(Boolean);
+  const inv=hkg.filter(h=>!genes.includes(h));if(inv.length){alert(`Reference gene(s) not in gene list: ${inv.join(', ')}`);return}
+  const groups=[],samples=[];
+  groupsRaw.split('\n').forEach(line=>{const parts=line.split(':').map(s=>s.trim());if(parts.length<2)return;const name=parts[0],count=parseInt(parts[1]);if(!name||isNaN(count)||count<1)return;groups.push(name);for(let i=1;i<=count;i++)samples.push({name:`${name}_${i}`,group:name})});
+  if(!groups.length){alert('Invalid group format. Use "GroupName: N" per line, e.g. "WT: 3"');return}
+  const nr=parseInt(g('a-nr').value)||3;
+  S.a.genes=genes;S.a.hkg=hkg;S.a.groups=groups;S.a.samples=samples;S.a.nr=nr;S.a.excl=new Set();
+  const cs=g('a-ctrl'),cc=cs.value;cs.innerHTML=groups.map(n=>`<option${n===cc?' selected':''}>${n}</option>`).join('');
+  S.a.ctrlGroup=g('a-ctrl').value||groups[0];
+  buildATdom();
+}
+function buildATfromState(){
+  const cs=g('a-ctrl'),cc=S.a.ctrlGroup;cs.innerHTML=S.a.groups.map(n=>`<option${n===cc?' selected':''}>${n}</option>`).join('');
+  S.a.ctrlGroup=g('a-ctrl').value||S.a.groups[0];
+  buildATdom();
+}
+function buildATdom(){
+  const{genes,samples,nr}=S.a;
+  const _activeHkg=S.a.hkg.filter(n=>!S.a.hkgDisabled.has(n));const rIs=_activeHkg.map(n=>genes.indexOf(n)).filter(i=>i>=0);
+  let r1=`<tr><th rowspan="2">Sample</th><th rowspan="2">Group</th>`,r2=`<tr>`;
+  genes.forEach((gn,gi)=>{const isR=rIs.includes(gi),bg=isR?'rgba(217,119,6,.07)':'';r1+=`<th colspan="${nr+1}" style="text-align:center;background:${bg};border-left:1px solid var(--b2)">${gn}${isR?' <span style="font-size:9px;color:var(--am)">🏠</span>':''}</th>`;for(let r=0;r<nr;r++)r2+=`<th style="background:${bg}${r===0?';border-left:1px solid var(--b2)':''}">Rep ${r+1}</th>`;r2+=`<th style="background:${bg};color:var(--pu)">Mean</th>`});
+  g('a-th').innerHTML=r1+'</tr>'+r2+'</tr>';let tb='';
+  samples.forEach((smp,si)=>{const ci=S.a.groups.indexOf(smp.group),gc=GC[ci%GC.length];tb+=`<tr><td class="sticky" style="color:var(--tx);font-weight:500">${smp.name}</td><td class="sticky2"><span style="color:${gc}">● ${smp.group}</span></td>`;genes.forEach((_,gi)=>{const isR=rIs.includes(gi),bg=isR?'background:rgba(217,119,6,.04);':'';for(let r=0;r<nr;r++)tb+=`<td style="${bg}${r===0?'border-left:1px solid var(--b2);':''}"><input type="number" id="act_${si}_${gi}_${r}" step="0.001" placeholder="—" oninput="aU(${si},${gi})" onpaste="handlePaste(event)" onclick="exclT(this)" onkeydown="ctNav(event,${si},${gi},${r})"></td>`;tb+=`<td id="am_${si}_${gi}" style="color:${isR?'var(--am)':'var(--pu)'}">—</td>`});tb+='</tr>'});
+  g('a-tb').innerHTML=tb;g('a-dc').style.display='';['a-hc','a-qcc','a-rc'].forEach(id=>g(id).style.display='none')
+}
+function exclT(el){if(!el.classList.contains('out')&&!el.classList.contains('excl'))return;if(el.classList.contains('out')){el.classList.replace('out','excl');S.a.excl.add(el.id)}else{el.classList.replace('excl','out');S.a.excl.delete(el.id)}const p=el.id.split('_');aU(parseInt(p[1]),parseInt(p[2]));if(g('a-rc')?.offsetParent!==null){try{anA()}catch(e){console.error('anA:',e)}}}
+function ctNav(e,si,gi,r){
+  const{genes,samples,nr}=S.a,ng=genes.length;
+  let ns=si,ng2=gi,nr2=r;
+  if(e.key==='Tab'){e.preventDefault();nr2++;if(nr2>=nr){nr2=0;ng2++}if(ng2>=ng){ng2=0;ns++}if(ns>=samples.length)return}
+  else if(e.key==='Enter'){e.preventDefault();ns++;if(ns>=samples.length)return}
+  else return;
+  const next=document.getElementById(`act_${ns}_${ng2}_${nr2}`);if(next){next.focus();next.select()}
+}
+function validCt(v){return v!=null&&!isNaN(v)&&v>0&&v<=45}
+function aU(si,gi){
+  // Debounced auto-reanalysis
+  if(!_suspendAnalysis&&g('a-rc')?.offsetParent!==null){clearTimeout(_reTimerA);_reTimerA=setTimeout(anA,800)}const nr=S.a.nr,v=[];for(let r=0;r<nr;r++){const id=`act_${si}_${gi}_${r}`;if(!S.a.excl.has(id))v.push(gv(id))}const vf=v.filter(x=>x!=null);if(!vf.length){g(`am_${si}_${gi}`).textContent='—';return}const m=mean(vf),s=sd(vf);g(`am_${si}_${gi}`).innerHTML=`<span style="color:${s!=null&&s>0.5?'var(--wn)':'inherit'}">${f(m,3)}</span>`;if(s!=null&&vf.length>1)for(let r=0;r<S.a.nr;r++){const id=`act_${si}_${gi}_${r}`;if(S.a.excl.has(id))continue;const el=g(id);if(!el||el.value===''){el&&el.classList.remove('out');continue};const cv2=parseFloat(el.value);if(!validCt(cv2)){el.style.borderColor='#dc2626';el.title='Invalid Ct (must be 0–45)'}else{el.style.borderColor='';el.title=''};const _med=median(vf);el.classList.toggle('out',validCt(cv2)&&_med!=null&&Math.abs(cv2-_med)>0.5)}}
+
+// ── MAIN ANALYSIS ───────────────────────────────────
+function anA(){
+  const{genes,samples,nr}=S.a,ctrlG=g('a-ctrl').value;S.a.ctrlGroup=ctrlG;
+  const _activeHkg=S.a.hkg.filter(n=>!S.a.hkgDisabled.has(n));const rIs=_activeHkg.map(n=>genes.indexOf(n)).filter(i=>i>=0);if(!rIs.length){alert('No reference genes found');return}
+  const tIs=genes.map((_,i)=>i).filter(i=>!rIs.includes(i));const rNms=rIs.map(i=>genes[i]);
+  const mnC=samples.map((_,si)=>genes.map((_,gi)=>{const v=[];for(let r=0;r<nr;r++){const id=`act_${si}_${gi}_${r}`;if(!S.a.excl.has(id))v.push(gv(id))}return mean(v.filter(x=>x!=null))}));
+  const tSD=samples.map((_,si)=>genes.map((_,gi)=>{const v=[];for(let r=0;r<nr;r++){const id=`act_${si}_${gi}_${r}`;if(!S.a.excl.has(id))v.push(gv(id))}return sd(v.filter(x=>x!=null))}));
+  const rMC=samples.map((_,si)=>mean(rIs.map(ri=>mnC[si][ri]).filter(x=>x!=null)));
+  const dC=samples.map((_,si)=>genes.map((_,gi)=>{if(rIs.includes(gi)||mnC[si][gi]==null||rMC[si]==null)return null;return mnC[si][gi]-rMC[si]}));
+  const cMn=genes.map((_,gi)=>{if(rIs.includes(gi))return null;const v=samples.map((s,si)=>s.group===ctrlG?dC[si][gi]:null).filter(x=>x!=null);return mean(v)});
+  const ddC=samples.map((_,si)=>genes.map((_,gi)=>{if(rIs.includes(gi)||dC[si][gi]==null||cMn[gi]==null)return null;return dC[si][gi]-cMn[gi]}));
+  const rEx=samples.map((_,si)=>genes.map((_,gi)=>{if(ddC[si][gi]==null)return null;const v=Math.pow(2,-ddC[si][gi]);return isFinite(v)&&!isNaN(v)?v:null}));
+  const gSt=genes.map((_,gi)=>{if(rIs.includes(gi))return null;return S.a.groups.reduce((acc,gr)=>{const v=samples.map((s,si)=>s.group===gr?rEx[si][gi]:null).filter(x=>x!=null);acc[gr]={values:v,mean:mean(v),sem:se(v),sd:sd(v),n:v.length};return acc},{})});
+  const stats=genes.map((_,gi)=>rIs.includes(gi)?null:calcSt(rEx,gi));
+  const _allHkgIs=S.a.hkg.map(n=>genes.indexOf(n)).filter(i=>i>=0);hkgS(mnC,samples,genes,_allHkgIs,rIs);qcR(mnC,tSD,rEx,samples,genes,rIs,nr);
+  // Results
+  g('a-rc').style.display='';const rl=rNms.length===1?rNms[0]:`mean(${rNms.join(', ')})`;
+  // Heatmap
+  let hmH=`<div style="overflow-x:auto"><table style="border-collapse:separate;border-spacing:4px"><thead><tr><th style="padding:4px 8px;text-align:left">Target gene</th>`;S.a.groups.forEach(gr=>hmH+=`<th style="padding:4px 8px;text-align:center">${gr}</th>`);hmH+=`<th style="padding:4px 8px;text-align:center">Stats</th></tr></thead><tbody>`;
+  tIs.forEach(gi=>{hmH+=`<tr><td style="padding:4px 8px;color:var(--tx);font-weight:600;font-family:var(--mo)">${genes[gi]}</td>`;S.a.groups.forEach(gr=>{const gs=gSt[gi]?.[gr];if(!gs||gs.mean==null){hmH+=`<td style="padding:4px;background:var(--s2);border-radius:6px;text-align:center;color:var(--mu)">—</td>`;return}const fc=gs.mean,hu=fc>=1?`rgba(40,120,181,${Math.min(.85,fc*.12)})`:`rgba(220,80,80,${Math.min(.7,(1/fc)*.12)})`;hmH+=`<td style="background:${hu};border-radius:6px;padding:8px 6px;text-align:center"><div style="font-family:var(--mo);font-size:13px;font-weight:700;color:var(--tx)">${f(fc,2)}×</div><div style="font-size:10px;color:var(--dm)">±${f(gs.sem,2)}</div></td>`});if(stats[gi]&&stats[gi].pairs.length){const sc2=stats[gi].pairs[0];const stC=sc2.stars==='ns'?'ns':sc2.stars==='*'?'s1':sc2.stars==='**'?'s2':sc2.stars==='***'?'s3':'s4';hmH+=`<td style="padding:4px 8px;text-align:center"><span class="stars ${stC}">${sc2.stars}</span><div style="font-size:10px;color:var(--mu)">p=${sc2.pAdj<0.001?sc2.pAdj.toExponential(1):f(sc2.pAdj,3)}</div></td>`}else hmH+=`<td></td>`;hmH+=`</tr>`});hmH+=`</tbody></table></div>`;g('a-hm').innerHTML=hmH;
+  // Results table
+  let th1=`<tr><th rowspan="2" class="sticky2">Sample</th><th rowspan="2" class="sticky2" style="left:72px">Group</th><th rowspan="2" style="color:var(--am)">Ref. Ct<br><span style="font-size:9px;color:var(--mu)">${rl}</span></th>`,th2=`<tr>`;tIs.forEach(gi=>{th1+=`<th colspan="3" style="text-align:center;border-left:1px solid var(--b2)">${genes[gi]}</th>`;th2+=`<th style="border-left:1px solid var(--b2)">ΔCt</th><th>ΔΔCt</th><th style="color:var(--ac)">2⁻ᐩᐩᶜᵗ</th>`});g('a-rth').innerHTML=th1+'</tr>'+th2+'</tr>';let tb='';samples.forEach((smp,si)=>{const ci=S.a.groups.indexOf(smp.group),gc=GC[ci%GC.length];tb+=`<tr><td style="color:var(--tx);font-weight:500">${smp.name}</td><td><span style="color:${gc}">● ${smp.group}</span></td><td style="color:var(--am)">${f(rMC[si],3)}</td>`;tIs.forEach(gi=>tb+=`<td style="border-left:1px solid var(--b2)">${f(dC[si][gi],3)}</td><td>${f(ddC[si][gi],3)}</td><td style="color:var(--ac);font-weight:500">${f(rEx[si][gi],3)}</td>`);tb+='</tr>'});g('a-rtb').innerHTML=tb;
+  // Stats table
+  let stH='<div class="sl">Statistical tests (Welch t-test · Benjamini-Hochberg FDR correction)</div><div class="sc"><table><thead><tr><th>Gene</th><th>Comparison</th><th>t</th><th>df</th><th>p (raw)</th><th>p (adjusted)</th><th>Result</th></tr></thead><tbody>';tIs.forEach(gi=>{if(!stats[gi])return;const av=stats[gi].anova;if(av){const stA=pSt(av.p),stC=stA==='ns'?'ns':stA==='*'?'s1':stA==='**'?'s2':stA==='***'?'s3':'s4';stH+=`<tr><td style="color:var(--tx);font-weight:600">${genes[gi]}</td><td colspan="3">One-way ANOVA</td><td>F(${av.dfb},${av.dfw})=${f(av.F,2)}</td><td>${av.p<0.001?av.p.toExponential(2):f(av.p,4)}</td><td><span class="stars ${stC}">${stA}</span> <span style="color:var(--mu);font-size:10px">overall</span></td></tr>`}const comps=stats[gi].pairs;comps.forEach(c=>{const stC=c.stars==='ns'?'ns':c.stars==='*'?'s1':c.stars==='**'?'s2':c.stars==='***'?'s3':'s4';stH+=`<tr><td style="color:var(--tx)">${genes[gi]}</td><td>${c.g1} vs ${c.g2}</td><td>${f(c.t,3)}</td><td>${f(c.df,1)}</td><td>${c.p<0.001?c.p.toExponential(2):f(c.p,4)}</td><td>${c.pAdj<0.001?c.pAdj.toExponential(2):f(c.pAdj,4)}</td><td><span class="stars ${stC}" style="font-size:13px">${c.stars}</span></td></tr>`})});stH+=`</tbody></table></div>`;g('a-stat-sum').innerHTML=stH;
+  // Charts
+  aCI.forEach(c=>c?.destroy());aCI.length=0;const cd=g('a-ch');cd.innerHTML='';
+  tIs.forEach(gi=>{const wr=document.createElement('div');wr.className='bx';wr.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:14px;font-weight:700;color:var(--tx);font-family:var(--mo)">${genes[gi]}</div><button class="btn bt" style="font-size:11px;padding:5px 10px" id="expbtn_${gi}">📷 PNG</button></div><div style="position:relative;height:380px"><canvas id="ac_${gi}"></canvas></div>`;cd.appendChild(wr);
+    const lbs=S.a.groups,bM=lbs.map(gr=>gSt[gi]?.[gr]?.mean??null),bS=lbs.map(gr=>gSt[gi]?.[gr]?.sem??null),bC=lbs.map((_,i)=>GC[i%GC.length]);
+    const _pts=samples.map((_,si)=>rEx[si][gi]).filter(x=>x!=null&&!isNaN(x));
+    const _tops=bM.filter(x=>x!=null).map((m,i)=>m+(bS[i]||0));
+    const _ymax=([..._pts,..._tops].length?Math.max(..._pts,..._tops):1)*1.20;
+    const epP={id:`ep${gi}`,afterDatasetsDraw(ch){const ctx=ch.ctx;ch.getDatasetMeta(0).data.forEach((bar,j)=>{const sv=bS[j],mv=bM[j];if(!sv||mv==null)return;const x=bar.x,yT=ch.scales.y.getPixelForValue(mv+sv),yB=ch.scales.y.getPixelForValue(mv-sv);ctx.save();ctx.beginPath();ctx.strokeStyle='#1e2438';ctx.lineWidth=1.5;ctx.moveTo(x,yT);ctx.lineTo(x,yB);ctx.moveTo(x-6,yT);ctx.lineTo(x+6,yT);ctx.moveTo(x-6,yB);ctx.lineTo(x+6,yB);ctx.stroke();ctx.restore()})}};
+    const dpP={id:`dp${gi}`,afterDatasetsDraw(ch){const ctx=ch.ctx;lbs.forEach((gr,li)=>{if(!ch.getDatasetMeta(0).data[li])return;const bx=ch.getDatasetMeta(0).data[li].x,p2=samples.map((s,si)=>s.group===gr&&rEx[si][gi]!=null?rEx[si][gi]:null).filter(v=>v!=null);p2.forEach((v,j)=>{const jx=bx+(j-(p2.length-1)/2)*(p2.length>1?10:0),py=ch.scales.y.getPixelForValue(v);ctx.save();ctx.beginPath();ctx.arc(jx,py,5,0,Math.PI*2);ctx.fillStyle=bC[li]+'cc';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.fill();ctx.stroke();ctx.restore()})})}};
+    requestAnimationFrame(()=>{const cv=g(`ac_${gi}`);if(!cv)return;const ch=new Chart(cv,{type:'bar',plugins:[epP,dpP],data:{labels:lbs,datasets:[{data:bM,backgroundColor:bC.map(c=>c+'33'),borderColor:bC,borderWidth:2.5,borderRadius:0,borderSkipped:false,barPercentage:0.65,categoryPercentage:0.8}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#4a5572',font:{size:13,weight:'500'}},grid:{display:false},border:{display:false}},y:{type:logScale?'logarithmic':'linear',title:{display:true,text:'2⁻ᐩᐩᶜᵗ',color:'#4a5572',font:{family:'DM Mono',size:12}},ticks:{color:'#4a5572',font:{family:'DM Mono',size:12}},grid:{color:'#eef1f8',lineWidth:1},border:{display:false},beginAtZero:!logScale,max:logScale?undefined:_ymax}}}});aCI.push(ch);const btn=g(`expbtn_${gi}`);if(btn)btn.onclick=()=>expAChart(aCI.length-1,genes[gi],gSt[gi],stats[gi]?.pairs)})});
+}
+function toggleLog(){logScale=g('log-toggle').checked;aCI.forEach(ch=>{if(ch.options.scales.y){ch.options.scales.y.type=logScale?'logarithmic':'linear';ch.options.scales.y.beginAtZero=!logScale;ch.update()}})}
+
+// ── HKG STABILITY ───────────────────────────────────
+function exclVT(el,gi,i,r){
+  if(el.classList.contains('excl')){el.classList.remove('excl')}
+  else{el.classList.remove('out');el.classList.add('excl')}
+  vRU(gi,i);
+  if(g('v-res-'+gi)&&g('v-res-'+gi).style.display!=='none') anVG(gi);
+}
+function toggleHKG(name){
+  const active=S.a.hkg.filter(n=>!S.a.hkgDisabled.has(n));
+  if(S.a.hkgDisabled.has(name)){
+    S.a.hkgDisabled.delete(name); // re-enable
+  } else {
+    if(active.length<=1){alert('Keep at least one active reference gene');return}
+    S.a.hkgDisabled.add(name); // disable
+  }
+  const newActive=S.a.hkg.filter(n=>!S.a.hkgDisabled.has(n));
+  if(g('a-hkg-inp'))g('a-hkg-inp').value=newActive.join(', ');
+  if(g('a-rc')?.offsetParent!==null){try{anA()}catch(e){console.error(e)}}
+}
+function hkgS(mnC,samples,genes,hIs,activeIs){if(!activeIs)activeIs=hIs;g('a-hc').style.display='';const n=hIs.length,sg=n<2;const hs=hIs.map(gi=>{const cts=samples.map((_,si)=>mnC[si][gi]).filter(x=>x!=null);return{name:genes[gi],gi,mCt:mean(cts),sdCt:sd(cts),cvCt:sd(cts)&&mean(cts)?(sd(cts)/mean(cts))*100:null,range:cts.length?Math.max(...cts)-Math.min(...cts):null,cts}});const Vm={};hIs.forEach(i=>{Vm[i]={};hIs.forEach(j=>{if(i===j){Vm[i][j]=0;return}const df=samples.map((_,si)=>{const a=mnC[si][i],b=mnC[si][j];return a!=null&&b!=null?a-b:null}).filter(x=>x!=null);Vm[i][j]=df.length>1?sd(df):null})});const mV=hIs.map(i=>{const vs=hIs.filter(j=>j!==i).map(j=>Vm[i][j]).filter(x=>x!=null);return vs.length?mean(vs):null});const ranked=[...hs.map((s,k)=>({...s,M:mV[k]}))].sort((a,b)=>sg?(a.sdCt??999)-(b.sdCt??999):(a.M??999)-(b.M??999));const good=sg?hs.filter(x=>x.sdCt!=null&&x.sdCt<0.5):ranked.filter(x=>x.M!=null&&x.M<0.5);let bdg='';if(sg){const x=hs[0],c=x.sdCt!=null&&x.sdCt<0.3?'bok':x.sdCt!=null&&x.sdCt<0.7?'bwn':'bbd';bdg=`<span class="bdg ${c}" style="font-size:12px;padding:4px 12px">${x.sdCt!=null&&x.sdCt<0.5?'✓ '+x.name+' — stable':'⚠ '+x.name+' — check stability'}</span>`}else{const r=good.length>=2?`✓ Use ${good[0].name} + ${good[1].name}`:good.length===1?`⚠ Only ${good[0].name} is stable`:null;bdg=r?`<span class="bdg ${good.length>=2?'bok':'bwn'}" style="font-size:12px;padding:4px 12px">${r}</span>`:'<span class="bdg bbd">✗ No stable gene found</span>'}g('hkg-bdg').innerHTML=bdg;g('hkg-mt').innerHTML=ranked.map((x,k)=>{if(sg){const c=x.sdCt==null?'':x.sdCt<0.3?'ok':x.sdCt<0.7?'wn':'bd';return`<div class="mc ${c}" style="position:relative;cursor:pointer;${S.a.hkgDisabled.has(x.name)?'opacity:.4;filter:grayscale(.8)':''}" onclick="toggleHKG('${x.name}')" title="${S.a.hkgDisabled.has(x.name)?'Re-enable':'Disable'}"><div style="position:absolute;top:5px;right:6px;font-size:9px;padding:1px 5px;border-radius:8px;${S.a.hkgDisabled.has(x.name)?'background:rgba(138,149,176,.15);color:var(--mu)':'background:var(--acd);color:var(--ac)'}"><b>${S.a.hkgDisabled.has(x.name)?'off':'on'}</b></div><div class="ml">${escH(x.name)}</div><div class="mv" style="font-size:17px">±${f(x.sdCt,3)}</div><div class="mu2">SD Ct</div></div>`}const c=x.M==null?'':x.M<0.3?'ok':x.M<0.5?'wn':'bd';return`<div class="mc ${c}" style="position:relative;cursor:pointer;${S.a.hkgDisabled.has(x.name)?'opacity:.4;filter:grayscale(.8)':''}" onclick="toggleHKG('${x.name}')" title="${S.a.hkgDisabled.has(x.name)?'Re-enable':'Disable'}"><div style="position:absolute;top:5px;right:6px;font-size:9px;padding:1px 5px;border-radius:8px;${S.a.hkgDisabled.has(x.name)?'background:rgba(138,149,176,.15);color:var(--mu)':'background:var(--acd);color:var(--ac)'}"><b>${S.a.hkgDisabled.has(x.name)?'off':'on'}</b></div><div class="ml">#${k+1} ${x.name}</div><div class="mv" style="font-size:17px">${f(x.M,3)}</div><div class="mu2">M-value ${k===0?'🥇':k===1?'🥈':''}</div></div>`}).join('');const mMax=sg?1:Math.max(...mV.filter(x=>x!=null),.01);g('hkg-th').innerHTML=`<tr><th>#</th><th>Gene</th><th>${sg?'SD Ct':'M-value'}</th><th>SD Ct</th><th>CV%</th><th>Range</th><th>Mean Ct</th><th>Status</th></tr>`;g('hkg-tb').innerHTML=ranked.map((x,k)=>{const sv=sg?x.sdCt:x.M;const clr=sv==null?'var(--dm)':sv<0.3?'var(--ok)':sv<0.5?'var(--wn)':'var(--er)';const bp=sv!=null?Math.max(0,Math.min(100,(1-sv/mMax)*100)):0;const lbl=sv==null?'—':sv<0.3?'✓ Excellent':sv<0.5?'✓ OK':sv<1?'⚠ Borderline':'✗ Not recommended';const cls=sv==null?'':sv<0.5?'bok':sv<1?'bwn':'bbd';return`<tr class="r${k+1}"><td style="color:${k<2?'var(--ok)':'var(--dm)'}">#${k+1}</td><td style="color:var(--tx)">${x.name}</td><td><span style="color:${clr}">${f(sv,3)}</span></td><td style="color:${sv==null?'var(--dm)':sv<0.3?'var(--ok)':sv<0.7?'var(--wn)':'var(--er)'}">${f(x.sdCt,3)}</td><td style="color:var(--mu)">${x.cvCt!=null?f(x.cvCt,2)+'%':'—'}</td><td style="color:var(--mu)">${f(x.range,3)}</td><td>${f(x.mCt,2)}</td><td><span class="bdg ${cls}">${lbl}</span></td></tr>`}).join('');let mxH='';if(sg){mxH='<div class="al al-i">Add a second reference gene to compute pairwise V(i,j) matrix and geNorm M-values.</div>'}else{mxH=`<div style="display:grid;grid-template-columns:auto${' 1fr'.repeat(n)};gap:6px;max-width:${180+n*110}px"><div></div>`;hIs.forEach(i=>mxH+=`<div style="text-align:center;font-size:11px;color:var(--dm);padding:3px 0;font-weight:600">${genes[i]}</div>`);hIs.forEach(i=>{mxH+=`<div style="font-size:11px;color:var(--dm);padding:5px 7px;font-weight:600">${genes[i]}</div>`;hIs.forEach(j=>{if(i===j){mxH+=`<div class="mat-c" style="background:var(--s3);color:var(--mu)">—</div>`;return}const v=Vm[i][j];const c=v==null?'var(--mu)':v<0.3?'var(--ok)':v<0.7?'var(--wn)':'var(--er)';mxH+=`<div class="mat-c"><span style="color:${c}">${f(v,3)}</span></div>`})});mxH+=`</div>`}g('hkg-mx').innerHTML=mxH;let pH='';hs.forEach(x=>{pH+=`<div style="margin-bottom:10px"><div style="font-size:10px;color:var(--mu);margin-bottom:5px">${x.name} — SD ${f(x.sdCt,3)} Ct</div><div style="display:flex;flex-wrap:wrap;gap:5px">`;samples.forEach((smp,si)=>{const ct=mnC[si][x.gi];if(ct==null)return;const dev=x.mCt?Math.abs(ct-x.mCt):0;const c=dev<0.3?'var(--ok)':dev<0.7?'var(--wn)':'var(--er)';const ci=S.a.groups.indexOf(smp.group);pH+=`<div class="pill"><span style="color:${GC[ci%GC.length]};font-size:9px">●</span><span style="color:var(--mu)">${smp.name}</span><span style="color:${c};font-weight:500">${f(ct,2)}</span><span style="color:var(--mu);font-size:9px">Δ${f(dev,2)}</span></div>`});pH+=`</div></div>`});g('hkg-pl').innerHTML=pH;let rH='<div class="sl">Recommendation</div>';if(good.length>=2){const t2=good.slice(0,2),nF=samples.map((_,si)=>mean(t2.map(x=>mnC[si][x.gi]).filter(x=>x!=null)));rH+=`<div class="al al-o">✓ Normalize with ${t2.map(x=>`<b>${x.name}</b>`).join(' + ')} ${!sg?`(M: ${t2.map(x=>f(x.M,3)).join(' / ')})`:''}</div><div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px">${samples.map((smp,si)=>{const ci=S.a.groups.indexOf(smp.group);return`<div class="pill"><span style="color:${GC[ci%GC.length]};font-size:9px">●</span><span style="color:var(--mu)">${smp.name}</span><span style="color:var(--ac)">${f(nF[si],2)}</span></div>`}).join('')}</div>`}else if(!sg){rH+=`<div class="al al-${good.length?'w':'b'}">${good.length?`⚠ Only <b>${good[0].name}</b> is stable — add a second reference gene`:'✗ No gene is sufficiently stable (M < 0.5)'}</div>`}g('hkg-rec').innerHTML=rH}
+
+// ── QC REPORT ───────────────────────────────────────
+function qcR(mnC,tSD,rEx,samples,genes,rIs,nr){g('a-qcc').style.display='';const tIs=genes.map((_,i)=>i).filter(i=>!rIs.includes(i));const rCts=samples.map((_,si)=>mean(rIs.map(ri=>mnC[si][ri]).filter(x=>x!=null)));const rSD=sd(rCts.filter(x=>x!=null));const aM=samples.flatMap((_,si)=>genes.map((_,gi)=>mnC[si][gi])).filter(x=>x!=null);const h35=aM.filter(x=>x>35&&x<=40).length,h40=aM.filter(x=>x>40).length,tot=aM.length;const aSD=tSD.flatMap(r=>r).filter(x=>x!=null);const ps=aSD.length?(aSD.filter(s=>s<=0.5).length/aSD.length)*100:100;const bCVs=[];tIs.forEach(gi=>S.a.groups.forEach(gr=>{const v=samples.map((s,si)=>s.group===gr?rEx[si][gi]:null).filter(x=>x!=null);if(v.length>1){const m=mean(v),s2=sd(v);if(m&&m>0)bCVs.push((s2/m)*100)}}));const mBCV=mean(bCVs.filter(x=>x!=null));const rSc=rSD==null?60:rSD<0.3?100:rSD<0.5?80:rSD<0.7?55:20;const dSc=tot?clamp(((tot-h35-h40*2)/tot)*100,0,100):100;const bSc=mBCV==null?70:mBCV<20?100:mBCV<40?75:mBCV<80?45:20;const ov=Math.round(ps*0.35+rSc*0.30+dSc*0.20+bSc*0.15);const oc=ov>=85?'ok':ov>=60?'wn':'bd';const ocl=ov>=85?'var(--ok)':ov>=60?'var(--wn)':'var(--er)';g('qc-g').style.borderColor=ocl;g('qc-g').style.color=ocl;g('qc-g').textContent=ov;g('qc-bdg').innerHTML=`<span class="bdg ${oc==='ok'?'bok':oc==='wn'?'bwn':'bbd'}" style="font-size:12px;padding:4px 12px">${ov>=85?'✓ Satisfactory':ov>=60?'⚠ Acceptable':'✗ Poor'} (${ov}/100)</span>`;const pc=ps>=90?'ok':ps>=70?'wn':'bd';const rc=rSD==null?'':rSD<0.3?'ok':rSD<0.7?'wn':'bd';const dc=h40>0?'bd':h35>0?'wn':'ok';const bc=mBCV==null?'pu':mBCV<30?'ok':mBCV<60?'wn':'bd';const rl=rIs.length===1?genes[rIs[0]]:`mean(${rIs.map(i=>genes[i]).join('+')})`; g('qc-mt').innerHTML=`<div class="mc ${pc}"><div class="ml">Pipetting</div><div class="mv">${f(ps,0)}</div><div class="mu2">% SD≤0.5 Ct</div><div class="pb-w" style="margin-top:6px"><div class="pb" style="width:${ps}%;background:${pc==='ok'?'var(--ok)':pc==='wn'?'var(--wn)':'var(--er)'}"></div></div></div><div class="mc ${rc}"><div class="ml">Ref. stability</div><div class="mv" style="font-size:16px">${rSD!=null?'±'+f(rSD,3):'—'}</div><div class="mu2">${rl}</div></div><div class="mc ${dc}"><div class="ml">Ct&gt;35</div><div class="mv" style="font-size:17px">${h35+h40}</div><div class="mu2">${h40?h40+' No Call':''}</div></div><div class="mc ${bc}"><div class="ml">Biological CV</div><div class="mv" style="font-size:17px">${mBCV!=null?f(mBCV,1)+'%':'—'}</div></div>`;const ws=[];if(h40>0)ws.push({c:'al-b',m:`✗ ${h40} Ct>40 (No Call)`});if(h35>0)ws.push({c:'al-w',m:`⚠ ${h35} Ct between 35–40`});if(rSD!=null&&rSD>0.7)ws.push({c:'al-b',m:`✗ Reference gene unstable (SD=${f(rSD,3)})`});else if(rSD!=null&&rSD>0.4)ws.push({c:'al-w',m:`⚠ Reference gene stability moderate (SD=${f(rSD,3)})`});if(aSD.filter(s=>s>0.5).length)ws.push({c:'al-w',m:`⚠ ${aSD.filter(s=>s>0.5).length} sample/gene pair(s) with SD>0.5 Ct`});if(S.a.excl.size)ws.push({c:'al-w',m:`ℹ ${S.a.excl.size} replicate(s) manually excluded`});const _n1=S.a.groups.filter(gr=>S.a.samples.filter(s=>s.group===gr).length<2);if(_n1.length)ws.push({c:'al-w',m:`⚠ ${_n1.join(', ')}: only 1 replicate — statistics unreliable`});if(!ws.length)ws.push({c:'al-o',m:'✓ No issues detected'});g('qc-al').innerHTML=ws.map(w=>`<div class="al ${w.c}" style="margin-bottom:7px">${w.m}</div>`).join('');// ── QC Plate ─────────────────────────────────────────
+const excl=S.a.excl,groups=S.a.groups;const wS=34;
+let pH=`<div style="margin-top:20px;border-top:1px solid var(--b2);padding-top:16px;text-align:left;overflow-x:auto"><div style="font-size:12px;font-weight:600;color:var(--tx);margin-bottom:3px">🔬 Pipetting Quality Map</div><div style="font-size:10px;color:var(--mu);margin-bottom:10px">Green &lt;0.2 Ct · Orange 0.2–0.5 · Red &gt;0.5 from replicate median</div><div style="overflow-x:auto;width:100%"><table style="border-collapse:collapse;margin:0"><tr><td style="min-width:65px"></td>`;
+tIs.forEach((gi,ti)=>{const gc=GC[ti%GC.length];pH+=`<td colspan="${nr}" style="text-align:center;font-size:8px;font-weight:700;color:${gc};background:${gc}15;border:2px solid ${gc}55;border-bottom:none;border-radius:4px 4px 0 0;padding:2px 5px">${genes[gi]}</td>`;if(ti<tIs.length-1)pH+=`<td style="width:4px"></td>`});
+pH+=`</tr><tr><td style="font-size:8px;color:var(--mu);padding:0 6px 2px;text-align:right">Sample</td>`;
+tIs.forEach((gi,ti)=>{const gc=GC[ti%GC.length];for(let r=0;r<nr;r++)pH+=`<td style="font-size:7px;color:var(--mu);text-align:center;background:${gc}08;border-left:${r===0?`2px solid ${gc}44`:'none'};border-right:${r===nr-1?`2px solid ${gc}44`:'none'};padding:0 1px 2px">R${r+1}</td>`;if(ti<tIs.length-1)pH+=`<td></td>`});
+pH+=`</tr>`;
+samples.forEach((smp,si)=>{const gc=GC[groups.indexOf(smp.group)%GC.length];pH+=`<tr><td style="font-size:9px;padding:2px 6px 2px 0;text-align:right;white-space:nowrap"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${gc};margin-right:3px;vertical-align:middle"></span>${smp.name}</td>`;
+tIs.forEach((gi,ti)=>{const gnc=GC[ti%GC.length];const vals=[];for(let r=0;r<nr;r++){const id=`act_${si}_${gi}_${r}`;if(!excl.has(id)){const v=gv(id);if(v!=null)vals.push(v)}}
+const med=median(vals);
+for(let r=0;r<nr;r++){const id=`act_${si}_${gi}_${r}`;const isEx=excl.has(id);const el=g(id);const raw=el?parseFloat(el.value):null;const v=!isNaN(raw)?raw:null;const dev=med!=null&&v!=null&&!isEx?Math.abs(v-med):null;
+const bg=isEx?'rgba(100,100,100,.12)':v==null?'var(--s2)':dev<0.2?'rgba(16,185,129,.22)':dev<0.5?'rgba(245,158,11,.28)':'rgba(239,68,68,.28)';
+const bdr=isEx?`1px solid rgba(100,100,100,.3)`:v==null?`1px solid var(--b2)`:dev<0.2?`1.5px solid rgba(16,185,129,.6)`:dev<0.5?`2px solid rgba(245,158,11,.75)`:`2px solid rgba(239,68,68,.8)`;
+const colBdr=`border-left:${r===0?`2px solid ${gnc}44`:'none'};border-right:${r===nr-1?`2px solid ${gnc}44`:'none'}`;
+pH+=`<td style="${colBdr};padding:2px 1px" title="${smp.name}·${genes[gi]}·R${r+1}${v!=null?'·Ct='+f(v,3):'·empty'}${isEx?'·excl':''}${dev!=null?'·Δ='+f(dev,2):''}"><div style="width:${wS}px;height:${wS}px;border-radius:50%;background:${bg};border:${bdr};display:flex;align-items:center;justify-content:center;font-size:8px;font-family:var(--mo);color:var(--tx);margin:auto">${v!=null?f(v,1):'·'}</div></td>`}
+if(ti<tIs.length-1)pH+=`<td style="width:4px"></td>`});pH+=`</tr>`});
+pH+=`</table></div><div style="display:flex;gap:12px;margin-top:8px;justify-content:center;font-size:10px">`;
+pH+=`<div style="display:flex;align-items:center;gap:4px"><div style="width:11px;height:11px;border-radius:50%;background:rgba(16,185,129,.25);border:1.5px solid rgba(16,185,129,.7)"></div>&lt;0.2 Ct</div>`;
+pH+=`<div style="display:flex;align-items:center;gap:4px"><div style="width:11px;height:11px;border-radius:50%;background:rgba(245,158,11,.28);border:2px solid rgba(245,158,11,.8)"></div>0.2–0.5</div>`;
+pH+=`<div style="display:flex;align-items:center;gap:4px"><div style="width:11px;height:11px;border-radius:50%;background:rgba(239,68,68,.28);border:2px solid rgba(239,68,68,.8)"></div>&gt;0.5 Ct</div>`;
+pH+=`</div></div>`;
+g('a-qc-plate').innerHTML=pH;
+}
+
+// ── EXPORT CSV ──────────────────────────────────────
+function expVCSV(_a,_b,_c,_d){if(!_demoGuard())return;return _expVCSV(_a,_b,_c,_d)}
+function _expVCSV(){
+  const{genes,np,nr,df,sc}=S.v;
+  let th=`<tr><th>Gene</th><th>Point</th><th>Dilution</th><th>Log10C</th>`;
+  for(let r=1;r<=nr;r++)th+=`<th>Rep ${r}</th>`;
+  th+=`<th>Mean</th><th>SD</th><th>CV%</th></tr>`;
+  let tb='';
+  genes.forEach((gn,gi)=>{
+    for(let i=0;i<np;i++){
+      const _b=sc>0&&sc<1?Math.round(1/sc):1,dl=`1:${(_b*Math.pow(df,i)).toLocaleString()}`,lc=Math.log10(sc/Math.pow(df,i));
+      const v=[];for(let r=0;r<nr;r++){const el=g(`vct_${gi}_${i}_${r}`);if(el&&!el.classList.contains('excl'))v.push(gv(`vct_${gi}_${i}_${r}`))}
+      const vf=v.filter(x=>x!=null),m=mean(vf),s=sd(vf),cv=s&&m?(s/m)*100:null;
+      tb+=`<tr><td>${gn}</td><td>${i+1}</td><td>${dl}</td><td>${f(lc,3)}</td>`;
+      for(let r=0;r<nr;r++){const el=g(`vct_${gi}_${i}_${r}`);tb+=`<td>${el&&el.value&&!el.classList.contains('excl')?el.value:''}</td>`}
+      tb+=`<td>${f(m,3)}</td><td>${f(s,3)}</td><td>${cv!=null?f(cv,1):''}</td></tr>`;
+    }
+  });
+  const tbl=`<table>${th}${tb}</table>`;
+  const xls=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Primer Validation</x:Name></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>${tbl}</body></html>`;
+  const blob=new Blob(['﻿'+xls],{type:'application/vnd.ms-excel;charset=utf-8'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='primer_validation.xls';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+function expCSV(_a,_b,_c,_d){if(!_demoGuard())return;return _expCSV(_a,_b,_c,_d)}
+function _expCSV(){
+  const{genes,samples,nr}=S.a,rIs=S.a.hkg.map(n=>genes.indexOf(n)).filter(i=>i>=0),tIs=genes.map((_,i)=>i).filter(i=>!rIs.includes(i));
+  const mnC=samples.map((_,si)=>genes.map((_,gi)=>{const v=[];for(let r=0;r<nr;r++){const id=`act_${si}_${gi}_${r}`;if(!S.a.excl.has(id))v.push(gv(id))}return mean(v.filter(x=>x!=null))}));
+  const tSD=samples.map((_,si)=>genes.map((_,gi)=>{const v=[];for(let r=0;r<nr;r++){const id=`act_${si}_${gi}_${r}`;if(!S.a.excl.has(id))v.push(gv(id))}return sd(v.filter(x=>x!=null))}));
+  const rMC=samples.map((_,si)=>mean(rIs.map(ri=>mnC[si][ri]).filter(x=>x!=null)));
+  const dC=samples.map((_,si)=>genes.map((_,gi)=>{if(rIs.includes(gi)||mnC[si][gi]==null||rMC[si]==null)return null;return mnC[si][gi]-rMC[si]}));
+  const cMn=genes.map((_,gi)=>{if(rIs.includes(gi))return null;const v=samples.map((s,si)=>s.group===S.a.ctrlGroup?dC[si][gi]:null).filter(x=>x!=null);return mean(v)});
+  // Build table
+  let th=`<tr><th>Sample</th><th>Group</th><th>Ref Ct</th>`;
+  tIs.forEach(gi=>th+=`<th>${genes[gi]} meanCt</th><th>${genes[gi]} dCt</th><th>${genes[gi]} ddCt</th><th>${genes[gi]} 2neg-ddCt</th><th>${genes[gi]} SD</th>`);
+  th+=`</tr>`;
+  let tb='';
+  samples.forEach((smp,si)=>{
+    tb+=`<tr><td>${smp.name}</td><td>${smp.group}</td><td>${f(rMC[si],3)}</td>`;
+    tIs.forEach(gi=>{const dc=dC[si][gi],ddc=dc!=null&&cMn[gi]!=null?dc-cMn[gi]:null,re=ddc!=null?Math.pow(2,-ddc):null;tb+=`<td>${f(mnC[si][gi],3)}</td><td>${f(dc,3)}</td><td>${f(ddc,3)}</td><td>${f(re,3)}</td><td>${f(tSD[si][gi],3)}</td>`});
+    tb+=`</tr>`;
+  });
+  const tbl=`<table>${th}${tb}</table>`;
+  const xls=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Expression Results</x:Name></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>${tbl}</body></html>`;
+  const blob=new Blob(['﻿'+xls],{type:'application/vnd.ms-excel;charset=utf-8'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='expression_results.xls';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+
+
+
+// Bind tabs via addEventListener (most reliable cross-environment)
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.tab').forEach(btn=>{
+    btn.addEventListener('click',function(){sw(this.dataset.pg,this)});
+  });
+});
+
+// Auto-save every 30s (silent)
+setInterval(()=>{try{sessionStorage.setItem('_qpcr_as',JSON.stringify({gi:g('a-genes-inp')?.value,hi:g('a-hkg-inp')?.value,gri:g('a-groups-inp')?.value,ctrl:g('a-ctrl')?.value,nr:g('a-nr')?.value}))}catch(e){}},30000);
+// Restore on load if available
+window.addEventListener('load',()=>{_initLicense();try{const d=JSON.parse(sessionStorage.getItem('_qpcr_as')||'null');if(d&&d.gi){if(d.gi)g('a-genes-inp').value=d.gi;if(d.hi)g('a-hkg-inp').value=d.hi;if(d.gri)g('a-groups-inp').value=d.gri;if(d.nr)g('a-nr').value=d.nr;if(d.gri)syncCtrl();}}catch(e){}});
+// Bind tabs via addEventListener (sandbox compatibility)
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.tab').forEach(btn=>{
+    btn.addEventListener('click',function(){sw(this.dataset.pg,this)});
+  });
+});
+
+// Auto-save every 30s (silent)
+setInterval(()=>{try{sessionStorage.setItem('_qpcr_as',JSON.stringify({gi:g('a-genes-inp')?.value,hi:g('a-hkg-inp')?.value,gri:g('a-groups-inp')?.value,ctrl:g('a-ctrl')?.value,nr:g('a-nr')?.value}))}catch(e){}},30000);
+window.addEventListener('load',()=>{_initLicense();try{const d=JSON.parse(sessionStorage.getItem('_qpcr_as')||'null');if(d&&d.gi){if(d.gi)g('a-genes-inp').value=d.gi;if(d.hi)g('a-hkg-inp').value=d.hi;if(d.gri)g('a-groups-inp').value=d.gri;if(d.nr)g('a-nr').value=d.nr;if(d.gri)syncCtrl();}}catch(e){}});
+
+// Expose all onclick-called functions globally (sandbox compatibility)
+
+function toggleCard(id,btn){const b=g(id);if(!b)return;const open=b.style.display!=='none';b.style.display=open?'none':'';btn.textContent=open?'▶':'▼'}
+function toggleSec(id,btn,label){const b=g(id);if(!b)return;const open=b.style.display!=='none';b.style.display=open?'none':'';btn.innerHTML=(open?'▶ ':'▼ ')+label}
+function handlePaste(e){if(_suspendAnalysis)return;e.preventDefault();const raw=(e.clipboardData||window.clipboardData).getData('text');const rows=raw.trim().split(/\r?\n/).map(row=>row.split(/\t/).map(v=>parseFloat(v.trim().replace(',','.'))));const id=e.target.id,parts=id.replace('act_','').split('_');const si0=parseInt(parts[0]),gi0=parseInt(parts[1]),r0=parseInt(parts[2]);const{genes,samples,nr}=S.a,ng=genes.length;const touched=new Set();_suspendAnalysis=true;rows.forEach((cols,ri)=>{const si=si0+ri;if(si>=samples.length)return;let gi=gi0,r=r0;cols.forEach(v=>{if(gi>=ng)return;if(!isNaN(v)&&validCt(v)){const el=document.getElementById(`act_${si}_${gi}_${r}`);if(el){el.value=v;touched.add(`${si}_${gi}`)}}r++;if(r>=nr){r=0;gi++}})});_suspendAnalysis=false;touched.forEach(k=>{const[si,gi]=k.split('_');aU(parseInt(si),parseInt(gi))});if(g('a-rc')?.offsetParent!==null)anA()}
+function handleVPaste(e,gi0,i0,r0){e.preventDefault();const raw=(e.clipboardData||window.clipboardData).getData('text');const rows=raw.trim().split(/\r?\n/).map(row=>row.split(/\t/).map(v=>parseFloat(v.trim().replace(',','.'))));const{np,nr,genes}=S.v,ng=genes.length;const touched=new Set();rows.forEach((cols,ri)=>{const pt=i0+ri;if(pt>=np)return;let gi=gi0,r=r0;cols.forEach(v=>{if(gi>=ng)return;if(!isNaN(v)&&validCt(v)){const el=document.getElementById(`vct_${gi}_${pt}_${r}`);if(el){el.value=v;touched.add(`${gi}_${pt}`)}}r++;if(r>=nr){r=0;gi++}})});touched.forEach(k=>{const[gi,pt]=k.split('_');vRU(parseInt(gi),parseInt(pt));clearTimeout(_reTimerV[parseInt(gi)]);_reTimerV[parseInt(gi)]=setTimeout(()=>anVG(parseInt(gi)),800)})}
+
+function _demoGuard(fn){
+  if(_pro)return true;
+  alert('Export is available in the full version.\nGet your license key at ko-fi.com/kmbio');
+  return false;
+}
+window.sw=sw;window._submitKey=_submitKey;window._enterDemo=_enterDemo;window.g=g;
+window.loadVD=loadVD;
+window.addVG=addVG;window.removeVG=removeVG;
+window.syncCtrl=syncCtrl;window.buildAT=buildAT;
+window.anA=anA;window.anVG=anVG;
+window.exclT=exclT;window.exclVT=exclVT;
+window.toggleHKG=toggleHKG;window.expVChart=expVChart;window.expAChart=expAChart;
+window.expVCSV=expVCSV;window.expCSV=expCSV;
+window.saveSession=saveSession;window.loadSession=loadSession;
+window.ctNav=ctNav;
+window.toggleLog=toggleLog;window.toggleCard=toggleCard;window.toggleSec=toggleSec;window.handlePaste=handlePaste;window.handleVPaste=handleVPaste;
+window.doPaste=doPaste;window.aU=aU;window.vRU=vRU;
+try{Chart.defaults.color='#4a5572';}catch(e){}
+</script>
+</body>
+</html>
